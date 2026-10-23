@@ -8,6 +8,8 @@ venv/
 .ruff_cache/
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
 data/*.db
 .env
 node_modules/
