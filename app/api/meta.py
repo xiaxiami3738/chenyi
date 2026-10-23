@@ -31,6 +31,7 @@ def healthz(request: Request) -> dict:
             "byok": True,
             "curated_links": True,
             "anonymous_client_id": True,
+            "kb": True,
         },
     }
 

@@ -68,15 +68,51 @@ def seed_dir(work_dir: Path) -> Path:
     (directory / "curated_links.json").write_text(
         json.dumps(payload, ensure_ascii=False), encoding="utf-8"
     )
+    terms_payload = {
+        "version": 1,
+        "terms": [
+            {
+                "term": "RAG",
+                "topic": "RAG 检索增强",
+                "definition": "检索增强生成：先从知识库检索相关内容，再让模型作答。",
+                "analogy": "开卷考试：先翻资料再答题。",
+                "pitfalls": "检索质量决定回答质量。",
+            }
+        ],
+    }
+    (directory / "terms.json").write_text(
+        json.dumps(terms_payload, ensure_ascii=False), encoding="utf-8"
+    )
     return directory
 
 
 @pytest.fixture
-def settings(work_dir: Path, seed_dir: Path) -> Settings:
+def kb_dir(work_dir: Path) -> Path:
+    """最小知识库种子：一小节开源书内容，供检索用例使用。"""
+    directory = work_dir / "kb"
+    book_dir = directory / "book"
+    book_dir.mkdir(parents=True)
+    (book_dir / "chapter1.md").write_text(
+        "# AI Agent 入门\n"
+        "\n"
+        "## 什么是 Agent\n"
+        "Agent 是能自主规划步骤、调用工具并逐步完成任务的智能体程序。\n"
+        "像带工具箱的员工：拆任务、选工具、干活、汇报。\n"
+        "\n"
+        "## RAG 检索增强\n"
+        "RAG 先从知识库检索相关内容，再让模型基于检索结果作答。\n",
+        encoding="utf-8",
+    )
+    return directory
+
+
+@pytest.fixture
+def settings(work_dir: Path, seed_dir: Path, kb_dir: Path) -> Settings:
     return Settings(
         app_mode="demo",
         db_path=work_dir / "test.db",
         seed_dir=seed_dir,
+        kb_dir=kb_dir,
         rate_limit_per_minute=10,
         max_concurrency=2,
         request_timeout_seconds=5,

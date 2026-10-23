@@ -14,12 +14,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from . import __version__
-from .api import meta_router, sessions_router
+from .api import kb_router, meta_router, sessions_router
 from .api.ratelimit import RateLimitMiddleware
 from .config import BASE_DIR, Settings, get_settings
 from .llm.redact import install_log_redaction, mask_secrets
 from .models import Base, ensure_sqlite_parent, make_engine, make_session_factory
 from .services import seed_curated_links
+from .services.kb import build_kb_index
 
 logger = logging.getLogger("chenyi")
 
@@ -43,13 +44,23 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     finally:
         session.close()
 
+    try:
+        kb_index = build_kb_index(settings.kb_dir, settings.seed_dir)
+        kb_docs = len(kb_index.docs)
+    except Exception:  # pragma: no cover - 索引失败不应阻止启动
+        logger.exception("知识库索引构建失败，检索接口将返回空")
+        kb_index = None
+        kb_docs = 0
+
     app.state.engine = engine
     app.state.session_factory = factory
+    app.state.kb_index = kb_index
     logger.info(
-        "chenyi 启动完成 mode=%s db=%s 新增策展链接=%d",
+        "chenyi 启动完成 mode=%s db=%s 新增策展链接=%d 知识条目=%d",
         settings.app_mode,
         settings.db_path,
         added,
+        kb_docs,
     )
     try:
         yield
@@ -78,6 +89,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.include_router(meta_router)
     app.include_router(sessions_router)
+    app.include_router(kb_router)
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     templates = Jinja2Templates(directory=str(TEMPLATES_DIR))

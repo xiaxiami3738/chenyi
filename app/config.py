@@ -44,6 +44,7 @@ class Settings:
     request_timeout_seconds: int = 120
     max_input_chars: int = 8000
     seed_dir: Path = BASE_DIR / "data" / "seed"
+    kb_dir: Path = BASE_DIR / "data" / "kb"
     trust_proxy_headers: bool = False
 
     @property
