@@ -12,6 +12,7 @@ from .tables import (
     Review,
     SessionLink,
     Term,
+    VaultEntry,
 )
 
 __all__ = [
@@ -26,6 +27,7 @@ __all__ = [
     "Review",
     "SessionLink",
     "Term",
+    "VaultEntry",
     "ensure_sqlite_parent",
     "make_engine",
     "make_session_factory",

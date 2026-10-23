@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from . import __version__
-from .api import kb_router, meta_router, sessions_router
+from .api import kb_router, meta_router, sessions_router, vault_router
 from .api.ratelimit import RateLimitMiddleware
 from .config import BASE_DIR, Settings, get_settings
 from .llm.redact import install_log_redaction, mask_secrets
@@ -90,6 +90,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(meta_router)
     app.include_router(sessions_router)
     app.include_router(kb_router)
+    app.include_router(vault_router)
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     templates = Jinja2Templates(directory=str(TEMPLATES_DIR))

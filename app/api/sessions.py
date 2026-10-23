@@ -25,6 +25,7 @@ from .. import __version__
 from ..llm.redact import mask_secrets
 from ..models.tables import AgentRun, LearnSession, Plan
 from ..services.pipeline import PipelineError, build_llm, build_summary, run_generation
+from ..services.vault import resolve_key
 
 logger = logging.getLogger("chenyi.sessions")
 
@@ -42,7 +43,7 @@ def _open_session(request: Request):
 
 
 class SessionCreateRequest(BaseModel):
-    """创建学习会话的请求体（不含 Key —— Key 走 X-LLM-Key 请求头）。"""
+    """创建学习会话的请求体（不含 Key —— Key 走 X-LLM-Key 请求头，或可选的服务端代存）。"""
 
     client_id: str = Field(min_length=1, max_length=64, description="匿名端标识")
     goal: str = Field(min_length=1, description="学习目标")
@@ -52,6 +53,10 @@ class SessionCreateRequest(BaseModel):
     provider_id: str | None = Field(default=None, description="供应商预设 id")
     base_url: str | None = Field(default=None, description="自定义 Base URL")
     model: str | None = Field(default=None, description="模型名（留空用预设默认）")
+    use_saved_key: bool = Field(
+        default=False,
+        description="M7.3：不随请求头发 Key，改用服务端加密代存的 Key（需先保存）",
+    )
 
 
 def _error(status_code: int, code: str, message: str) -> JSONResponse:
@@ -71,6 +76,35 @@ async def create_session(request: Request, body: SessionCreateRequest) -> JSONRe
         )
 
     key = request.headers.get("x-llm-key", "").strip() or None
+    # M7.3：请求头没带 Key 且用户勾选「使用服务器代存」时，用代存的 Key
+    if body.use_saved_key:
+        session = _open_session(request)
+        try:
+            scope = body.provider_id or (body.base_url or "").strip() or None
+            if scope is None:
+                return _error(
+                    400,
+                    "saved_key_scope_missing",
+                    "使用服务器代存 Key 时需要先选择供应商（或填写自定义 Base URL），"
+                    "否则不知道用哪个 Key 来回答。",
+                )
+            resolved, vault_error = resolve_key(
+                settings,
+                session,
+                client_id=body.client_id,
+                scope=scope,
+                header_key=key,
+            )
+        finally:
+            session.close()
+        if vault_error:
+            return _error(
+                vault_error["status_code"],
+                vault_error["code"],
+                vault_error["message"],
+            )
+        if resolved:
+            key = resolved
     try:
         llm = build_llm(
             settings,

@@ -153,7 +153,14 @@ function currentPayload() {
     provider_id: $("provider").value || null,
     base_url: $("base-url").value.trim() || null,
     model: $("model").value.trim() || null,
+    use_saved_key: useSavedKeyChecked(),
   };
+}
+
+// M7.3：是否勾选「使用我已保存到服务器的 Key」
+function useSavedKeyChecked() {
+  const el = $("use-saved-key");
+  return !!(el && el.checked);
 }
 
 function setGenerating(on) {
@@ -300,8 +307,12 @@ async function startGeneration(event) {
   setGenerating(true);
 
   const headers = { "Content-Type": "application/json" };
-  const key = $("api-key").value.trim();
-  if (key) headers["X-LLM-Key"] = key; // 单次请求透传，服务端不落库
+  if (!useSavedKeyChecked()) {
+    // 未勾选代存：本机浏览器 Key 单次透传，服务端不落库
+    const key = $("api-key").value.trim();
+    if (key) headers["X-LLM-Key"] = key;
+  }
+  // 勾选代存时不发 X-LLM-Key，由服务端用加密代存的 Key 回答问题
 
   try {
     const res = await fetch("/api/sessions", {
@@ -575,6 +586,113 @@ function checkInsecure() {
   }
 }
 
+/* ── M7.3：服务端加密代存（可选）────────────────────────── */
+
+let vaultState = { enabled: false, reason: null, https: false, scopes: [] };
+
+async function loadVaultState() {
+  if (!$("vault-block")) return;
+  try {
+    const res = await fetch(`/api/vault?client_id=${encodeURIComponent(ensureClientId())}`);
+    vaultState = await res.json();
+  } catch (err) {
+    vaultState = { enabled: false, reason: null, https: false, scopes: [] };
+  }
+  renderVaultUI();
+}
+
+function currentVaultScope() {
+  const provider = $("provider").value;
+  if (provider) return provider;
+  return $("base-url").value.trim() || "";
+}
+
+function renderVaultUI() {
+  const status = $("vault-status");
+  const scopesBox = $("vault-scopes");
+  const saveBtn = $("save-vault");
+  const clearBtn = $("clear-vault");
+  const check = $("use-saved-key");
+  if (!status || !saveBtn) return;
+
+  if (!vaultState.enabled) {
+    const reasonText =
+      vaultState.reason === "vault_not_configured"
+        ? "服务器未配置主密钥（环境变量 VAULT_MASTER_KEY），代存功能未启用。"
+        : "当前为 Demo 模式，不调用真实模型，代存没有意义。";
+    status.textContent = "🔒 " + reasonText;
+    scopesBox.innerHTML = "";
+    saveBtn.disabled = true;
+    clearBtn.disabled = true;
+    if (check) { check.disabled = true; check.checked = false; }
+    return;
+  }
+  if (!vaultState.https) {
+    status.textContent = "⚠️ 当前连接不是 HTTPS（前置条件），代存已禁用，请通过 https 访问本站。";
+    status.className = "hint warn-text";
+  } else {
+    status.textContent = "✅ 代存可用：保存后才会调用你自己的模型接口来回答，之后生成时勾选上方选项即可免填。";
+    status.className = "hint";
+  }
+  saveBtn.disabled = !vaultState.https;
+  clearBtn.disabled = !vaultState.https;
+  scopesBox.innerHTML = "";
+  (vaultState.scopes || []).forEach((scope) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "scope-chip";
+    chip.textContent = scope;
+    chip.title = "清除这个供应商的代存 Key";
+    chip.addEventListener("click", () => clearVault(scope));
+    scopesBox.appendChild(chip);
+  });
+  if (check) {
+    check.disabled = !vaultState.https || (vaultState.scopes || []).length === 0;
+  }
+}
+
+async function saveVault() {
+  const scope = currentVaultScope();
+  const apiKey = $("api-key").value.trim();
+  if (!apiKey) {
+    $("key-status").textContent = "请先在上方「API Key」填入要代存的 Key。";
+    return;
+  }
+  if (!scope) {
+    $("key-status").textContent = "请先选择供应商或填写自定义 Base URL（代存按它区分）。";
+    return;
+  }
+  try {
+    const res = await fetch("/api/vault", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: ensureClientId(), scope, api_key: apiKey }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error((data.error && data.error.message) || "保存失败。");
+    $("key-status").textContent = `✅ 已加密保存到服务器（${scope}）。保存后才会调用你自己的模型接口来回答。`;
+    await loadVaultState();
+  } catch (err) {
+    $("key-status").textContent = "⚠️ " + err.message;
+  }
+}
+
+async function clearVault(scope) {
+  try {
+    const res = await fetch("/api/vault", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: ensureClientId(), scope }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error((data.error && data.error.message) || "清除失败。");
+    $("key-status").textContent = `🗑 已清除服务器上「${scope}」的代存 Key。`;
+    await loadVaultState();
+  } catch (err) {
+    $("key-status").textContent = "⚠️ " + err.message;
+  }
+}
+
 /* ── M3：下载 Markdown 与历史页 ───────────────────────── */
 
 async function downloadMarkdown() {
@@ -734,9 +852,15 @@ document.addEventListener("DOMContentLoaded", () => {
   bindKbSearch();
   loadBrowse();
   checkInsecure();
+  loadVaultState();
   $("provider").addEventListener("change", syncProviderDefaults);
   $("save-key").addEventListener("click", saveKeyFields);
   $("clear-key").addEventListener("click", clearKeyFields);
+  $("save-vault").addEventListener("click", saveVault);
+  $("clear-vault").addEventListener("click", () => {
+    const scope = currentVaultScope();
+    if (scope) clearVault(scope);
+  });
   const downloadBtn = $("download-md");
   if (downloadBtn) downloadBtn.addEventListener("click", downloadMarkdown);
   const popClose = $("mode-popover-close");

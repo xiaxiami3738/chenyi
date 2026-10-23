@@ -60,6 +60,11 @@
         placeholder="例如：向量检索、Prompt 怎么写、Agent 怎么编排">
     </label>
 
+    <label class="field field-wide vault-use">
+      <input type="checkbox" id="use-saved-key" disabled>
+      <span>使用我已保存到服务器的 Key（免填）— <strong>保存后才会调用你自己的模型接口来回答</strong></span>
+    </label>
+
     <div class="field field-wide actions">
       <button type="submit" class="btn btn-primary" id="start-btn">生成我的学习路径</button>
       <span class="hint" id="start-hint">
@@ -110,6 +115,21 @@
       <button type="button" class="btn" id="save-key">保存在本机浏览器</button>
       <button type="button" class="btn btn-ghost" id="clear-key">清除本机保存</button>
       <span class="hint" id="key-status"></span>
+    </div>
+  </div>
+
+  <div id="vault-block" class="vault-block">
+    <h3>🔐 服务端加密代存（可选）</h3>
+    <p class="muted">
+      不想每次填 Key？可以把 Key 加密保存到本站服务器，之后生成时勾选
+      「使用我已保存到服务器的 Key」即可免填。保存后才会调用你自己的模型接口来回答；
+      服务器只存加密密文，不存明文；需在真实模式（HTTPS）下使用。
+    </p>
+    <p class="hint" id="vault-status"></p>
+    <div id="vault-scopes" class="vault-scopes"></div>
+    <div class="field field-wide actions">
+      <button type="button" class="btn" id="save-vault" disabled>保存当前 Key 到服务器（加密代存）</button>
+      <button type="button" class="btn btn-ghost" id="clear-vault" disabled>清除服务器代存</button>
     </div>
   </div>
 </section>

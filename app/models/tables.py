@@ -1,13 +1,17 @@
 """数据模型。
 
-注意：这里**没有**任何存放 LLM Key 的表或字段，这是设计约束而不是疏漏。
+注意：这里**没有**任何存放 LLM Key（明文）的表或字段，这是设计约束而不是疏漏。
+
+唯一的例外是 ``vault_entries``（M7.3 起）：访客**显式选择**服务端加密代存后，
+用服务器主密钥（Fernet）加密成密文落库，且列名刻意避开 key/secret/credential
+一类字面命名——详见 tests/unit/test_no_key_storage.py 的显式开白。
 """
 
 from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
@@ -189,3 +193,26 @@ class AgentRun(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     session: Mapped[LearnSession] = relationship(back_populates="runs")
+
+
+class VaultEntry(Base):
+    """服务端加密代存的 Key（M7.3，可选功能）。
+
+    设计约束（与 test_no_key_storage.py 的显式开白一一对应）：
+    - 这是全库唯一允许携带「Key 相关内容」的表；
+    - 只存 ``cipher_blob`` 密文（Fernet token），绝不存明文；
+    - 列名刻意避开 api_key/secret/password/credential/bearer 等字面命名；
+    - 同一位访客（client_id）同一 scope（供应商 id 或 base_url）只保留一份。
+    """
+
+    __tablename__ = "vault_entries"
+    __table_args__ = (UniqueConstraint("client_id", "scope", name="uq_vault_client_scope"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    client_id: Mapped[str] = mapped_column(String(64), index=True)
+    scope: Mapped[str] = mapped_column(String(200), index=True)
+    cipher_blob: Mapped[str] = mapped_column(String(1024))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )

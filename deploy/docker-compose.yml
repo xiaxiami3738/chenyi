@@ -13,6 +13,8 @@ services:
       REQUEST_TIMEOUT_SECONDS: ${REQUEST_TIMEOUT_SECONDS:-120}
       MAX_INPUT_CHARS: ${MAX_INPUT_CHARS:-8000}
       TRUST_PROXY_HEADERS: "true"
+      # M7.3 服务端加密代存主密钥：留空则代存功能关闭（纯浏览器 BYOK 不受影响）
+      VAULT_MASTER_KEY: ${VAULT_MASTER_KEY:-}
     volumes:
       - ../data:/app/data
     expose:

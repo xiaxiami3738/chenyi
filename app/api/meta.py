@@ -9,6 +9,7 @@ from fastapi import APIRouter, Query, Request
 from .. import __version__
 from ..llm.providers import list_presets
 from ..services import links_for_topic, topics_with_links
+from ..services.vault import vault_available
 
 router = APIRouter(prefix="/api", tags=["meta"])
 
@@ -32,6 +33,7 @@ def healthz(request: Request) -> dict:
             "curated_links": True,
             "anonymous_client_id": True,
             "kb": True,
+            "vault": vault_available(settings),
         },
     }
 
@@ -42,8 +44,10 @@ def providers() -> dict:
     return {
         "providers": list_presets(),
         "usage": (
-            "访客自带 Key：Key 只存在浏览器 localStorage，"
+            "访客自带 Key：默认 Key 只存在浏览器 localStorage，"
             "并随请求头 X-LLM-Key 单次透传，服务端不落库、不写日志。"
+            "可选：在真实模式（HTTPS）下你也可以勾选「服务端加密代存」，"
+            "Key 会用服务器主密钥加密保存，保存后才会调用你自己的模型接口来回答，之后可免填生成。"
         ),
     }
 

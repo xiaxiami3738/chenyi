@@ -128,6 +128,42 @@ input:focus, select:focus, textarea:focus {
 
 .actions { flex-direction: row; align-items: center; gap: 10px; flex-wrap: wrap; }
 
+/* M7.3：服务端加密代存 */
+.vault-use {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 9px;
+  background: #f8fafc;
+}
+.vault-use:has(input:checked) {
+  border-style: solid;
+  border-color: var(--primary);
+}
+.vault-use input { margin-top: 3px; accent-color: var(--primary); }
+.vault-block {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+.vault-block h3 { margin: 0 0 6px; font-size: 15px; }
+.vault-scopes { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+.scope-chip {
+  font: inherit;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #eff6ff;
+  color: var(--primary);
+  cursor: pointer;
+}
+.scope-chip:hover { border-color: var(--primary); }
+.warn-text { color: #b45309; }
+.vault-use input:disabled + span { opacity: .6; }
+
 .btn {
   font: inherit;
   font-weight: 600;
