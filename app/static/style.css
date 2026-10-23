@@ -103,6 +103,40 @@ input:focus, select:focus, textarea:focus {
 }
 .badge-ok { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
 .badge-demo { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+#mode-badge { cursor: pointer; }
+#mode-badge:hover { filter: brightness(.97); }
+
+.popover {
+  position: fixed;
+  top: 56px;
+  right: 20px;
+  z-index: 20;
+  max-width: 380px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, .14);
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+}
+.popover-title { font-weight: 700; margin: 0 0 6px; font-size: 14px; }
+.popover p + p { margin-top: 0; }
+.popover-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 2px 6px;
+}
+.popover-close:hover { color: var(--text); }
+@media (max-width: 640px) { .popover { left: 12px; right: 12px; max-width: none; } }
 
 .warning {
   background: var(--warn-bg);

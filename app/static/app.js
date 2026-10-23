@@ -28,10 +28,45 @@ async function loadHealth() {
     const data = await res.json();
     badge.textContent = data.demo ? "Demo 模式（无需 Key）" : "真实模式";
     badge.className = "badge " + (data.demo ? "badge-demo" : "badge-ok");
+    // 点击徽章 → 弹出当前模式的完整说明
+    badge.addEventListener("click", () => showModePopover(data));
+    badge.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" || ev.key === " ") {
+        ev.preventDefault();
+        showModePopover(data);
+      }
+    });
   } catch (err) {
     badge.textContent = "服务不可达";
     badge.className = "badge badge-muted";
   }
+}
+
+function showModePopover(data) {
+  const pop = $("mode-popover");
+  if (!pop) return;
+  const title = $("mode-popover-title");
+  const body = $("mode-popover-body");
+  if (data.demo) {
+    title.textContent = "Demo 模式（当前）";
+    body.textContent =
+      "无需任何 API Key，也不调用任何真实模型：页面内容来自内置的预置示例数据（FakeLLM），" +
+      "零费用、零额度消耗，适合先体验。想使用真实模型？在② BYOK 卡片选择供应商并填入自己的 Key，" +
+      "提交后即自动切换为真实模式（Key 只保存在你的浏览器 localStorage，不会上传到本站服务器）。";
+  } else {
+    title.textContent = "真实模式（当前）";
+    body.textContent =
+      "你自带模型 Key（BYOK）：提交时 Key 仅在单次请求中传给本站，本站不落库、不写日志，" +
+      "只在服务端转发给所选模型（如 DeepSeek/Qwen/GLM 等），随后即被丢弃。可用模型由你选择的供应商决定。";
+  }
+  pop.hidden = false;
+  $("mode-badge").setAttribute("aria-expanded", "true");
+}
+
+function closeModePopover() {
+  const pop = $("mode-popover");
+  if (pop) pop.hidden = true;
+  $("mode-badge").setAttribute("aria-expanded", "false");
 }
 
 async function loadProviders() {
@@ -544,4 +579,12 @@ document.addEventListener("DOMContentLoaded", () => {
   $("clear-key").addEventListener("click", clearKeyFields);
   const downloadBtn = $("download-md");
   if (downloadBtn) downloadBtn.addEventListener("click", downloadMarkdown);
+  const popClose = $("mode-popover-close");
+  if (popClose) popClose.addEventListener("click", closeModePopover);
+  document.addEventListener("click", (ev) => {
+    if (!$("mode-popover") || $("mode-popover").hidden) return;
+    if (!$("mode-popover").contains(ev.target) && !$("mode-badge").contains(ev.target)) {
+      closeModePopover();
+    }
+  });
 });

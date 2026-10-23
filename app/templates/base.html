@@ -14,7 +14,12 @@
         <a class="nav-link" href="/">首页</a>
         <a class="nav-link" href="/history">我的历史</a>
       </nav>
-      <span id="mode-badge" class="badge badge-muted">加载中…</span>
+      <span id="mode-badge" class="badge badge-muted" role="button" tabindex="0" aria-expanded="false">加载中…</span>
+      <div id="mode-popover" class="popover" hidden>
+        <button type="button" id="mode-popover-close" class="popover-close" aria-label="关闭">×</button>
+        <p class="popover-title" id="mode-popover-title">Demo 模式</p>
+        <p id="mode-popover-body"></p>
+      </div>
       <a class="gh-link" href="https://github.com/xiaxiami3738/chenyi" rel="noopener noreferrer" target="_blank">GitHub</a>
     </div>
   </header>
