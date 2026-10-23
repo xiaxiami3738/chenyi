@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlparse
@@ -20,6 +21,23 @@ from ..models.tables import CuratedLink
 
 #: 只信任代码托管站点，避免策展表被塞进钓鱼链接
 ALLOWED_HOSTS = frozenset({"github.com", "www.github.com", "gitee.com", "www.gitee.com"})
+
+#: 脱敏用：模型输出里的任意 URL（含 markdown 链接语法 [文字](url)）
+_URL_PATTERN = re.compile(r"\[([^\]]*)\]\(https?://[^)\s]+\)|https?://[^\s\"'<>）)】\]]+")
+
+
+def _drop_url(match: re.Match) -> str:
+    """markdown 链接保留文字、去掉 URL；裸 URL 整体删除。"""
+    return match.group(1) if match.group(1) is not None else ""
+
+
+def strip_urls(text: str) -> str:
+    """从文本里剔除一切 URL —— 防模型编造链接的兜底。
+
+    真正的链接只能来自人工策展表（``curated_links``），
+    无论模型输出了什么 URL，落到库/事件里之前都必须在这里删掉。
+    """
+    return _URL_PATTERN.sub(_drop_url, text)
 
 
 def is_allowed_url(url: str) -> bool:

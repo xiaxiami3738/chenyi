@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from . import __version__
-from .api import meta_router
+from .api import meta_router, sessions_router
 from .config import BASE_DIR, Settings, get_settings
 from .llm.redact import install_log_redaction, mask_secrets
 from .models import Base, ensure_sqlite_parent, make_engine, make_session_factory
@@ -63,7 +65,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.settings = settings
+    #: 应用层并发信号量：同时进行的生成任务不超过 max_concurrency，超限 429
+    app.state.semaphore = asyncio.Semaphore(settings.max_concurrency)
+    #: 进程内 SSE 事件总线：session_id -> SessionEventBus（生成结束后即移除）
+    app.state.live: dict[int, object] = {}
     app.include_router(meta_router)
+    app.include_router(sessions_router)
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -88,6 +95,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return JSONResponse(
             status_code=500,
             content={"error": {"code": "internal", "message": "服务内部错误，请稍后重试"}},
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(_request: Request, exc: RequestValidationError) -> JSONResponse:
+        """Pydantic 校验失败统一为错误信封，前端好提示。"""
+        return JSONResponse(
+            status_code=422,
+            content={
+                "error": {
+                    "code": "invalid_request",
+                    "message": "请求参数不合法",
+                    "detail": mask_secrets(str(exc.errors())),
+                }
+            },
         )
 
     return app

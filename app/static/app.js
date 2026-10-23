@@ -1,5 +1,6 @@
-/* 前端脚本：只做三件事 —— 展示状态、在本机保存 BYOK 配置、渲染策展链接。
-   注意：M0 阶段还没有生成流水线，Key 不会被发送到任何地方。 */
+/* 前端脚本：展示状态、在本机保存 BYOK 配置、渲染策展链接。
+   M1：提交表单后 POST /api/sessions，再用 EventSource 订阅 SSE，
+   逐条渲染 progress / lesson / term / quiz / done / error 事件。 */
 
 const LS = {
   provider: "chenyi.provider",
@@ -101,6 +102,216 @@ function clearKeyFields() {
   $("key-status").textContent = "已清除本机保存的 Key 与模型配置。";
 }
 
+/* ── 生成主流程：提交 → 建会话 → SSE 逐条渲染 ───────────────── */
+
+let genSource = null; // 当前 EventSource，便于中断
+
+function currentPayload() {
+  return {
+    client_id: ensureClientId(),
+    goal: $("goal").value.trim(),
+    level: $("level").value,
+    weak_points: $("weak_points").value.trim(),
+    daily_minutes: Number($("daily_minutes").value || 30),
+    provider_id: $("provider").value || null,
+    base_url: $("base-url").value.trim() || null,
+    model: $("model").value.trim() || null,
+  };
+}
+
+function setGenerating(on) {
+  $("start-btn").disabled = on;
+  $("start-btn").textContent = on ? "正在生成中…" : "生成我的学习路径";
+}
+
+function showError(message) {
+  const box = $("gen-error");
+  box.hidden = false;
+  box.textContent = "⚠️ " + message;
+}
+
+function clearOutput() {
+  $("gen-error").hidden = true;
+  $("gen-progress").hidden = true;
+  $("gen-links").hidden = true;
+  $("gen-progress").innerHTML = "";
+  $("gen-days").innerHTML = "";
+  $("gen-links").innerHTML = "";
+}
+
+function appendProgress(message) {
+  $("gen-progress").hidden = false;
+  const line = document.createElement("p");
+  line.className = "progress-line";
+  line.textContent = message;
+  $("gen-progress").appendChild(line);
+}
+
+/** 根据 day_index 找（或建）对应的天卡片容器。 */
+function dayCard(day) {
+  const daysBox = $("gen-days");
+  let card = document.getElementById("day-" + day);
+  if (!card) {
+    card = document.createElement("article");
+    card.id = "day-" + day;
+    card.className = "lesson-card";
+    card.dataset.day = day;
+    daysBox.appendChild(card);
+  }
+  return card;
+}
+
+/** 防止模型/nl 输出里的 HTML 被直接注入，统一用 textContent 渲染。 */
+function textEl(tag, className, text) {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  el.textContent = text;
+  return el;
+}
+
+function renderLesson(payload) {
+  const card = dayCard(payload.day);
+  card.innerHTML = ""; // 只保留最新一版
+  card.appendChild(textEl("h3", "lesson-title", `第 ${payload.day} 天 · ${payload.topic}`));
+  const body = textEl("div", "lesson-body", payload.body_md);
+  card.appendChild(body);
+  (payload.code_snippets || []).forEach((snip) => {
+    card.appendChild(textEl("pre", "code-snippet", snip));
+  });
+}
+
+function renderTerm(payload) {
+  const card = dayCard(payload.day);
+  const term = textEl("div", "term-card", "");
+  term.appendChild(textEl("strong", "term-name", "📖 " + payload.term));
+  term.appendChild(textEl("div", "term-def", payload.definition));
+  if (payload.analogy) term.appendChild(textEl("div", "term-analogy", "类比：" + payload.analogy));
+  if (payload.pitfalls) term.appendChild(textEl("div", "term-pitfalls", "注意：" + payload.pitfalls));
+  card.appendChild(term);
+}
+
+function renderQuiz(payload) {
+  const card = dayCard(payload.day);
+  const quiz = textEl("div", "quiz-card", "");
+  quiz.appendChild(textEl("div", "quiz-question", `✏️ ${payload.question}`));
+  (payload.options || []).forEach((opt) => {
+    quiz.appendChild(textEl("div", "quiz-option", "· " + opt));
+  });
+  const answer = textEl("div", "quiz-answer", "参考答案：" + payload.answer);
+  answer.hidden = true;
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "btn btn-ghost btn-small";
+  toggle.textContent = "看答案";
+  toggle.addEventListener("click", () => {
+    answer.hidden = !answer.hidden;
+    toggle.textContent = answer.hidden ? "看答案" : "收起答案";
+  });
+  quiz.append(toggle, answer);
+  card.appendChild(quiz);
+}
+
+function renderDone(payload) {
+  const done = textEl("div", "done-box", "");
+  done.appendChild(textEl("strong", "", "✅ 学习路径已生成完毕"));
+  const stats = [
+    `计划 ${payload.plan_count || 0} 天`,
+    `讲义 ${payload.lesson_count || 0} 篇`,
+    `名词 ${payload.term_count || 0} 张`,
+    `练习 ${payload.quiz_count || 0} 道`,
+  ].join(" · ");
+  done.appendChild(textEl("div", "done-stats", stats));
+  $("gen-days").appendChild(done);
+
+  const links = payload.links || [];
+  if (links.length) {
+    const box = $("gen-links");
+    box.hidden = false;
+    box.appendChild(textEl("h3", "", "🗂 配套开源项目（人工策展）"));
+    links.forEach((link) => {
+      const item = textEl("div", "link-item", "");
+      const a = document.createElement("a");
+      a.href = link.url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = link.title;
+      const why = textEl("div", "why", link.why || "");
+      item.append(a, why);
+      box.appendChild(item);
+    });
+  }
+}
+
+async function startGeneration(event) {
+  event.preventDefault();
+  const hint = $("start-hint");
+  const payload = currentPayload();
+  if (!payload.goal) {
+    hint.textContent = "请先写下你的目标。";
+    return;
+  }
+  hint.textContent = "正在创建会话…";
+  clearOutput();
+  $("start-result").hidden = false;
+  setGenerating(true);
+
+  const headers = { "Content-Type": "application/json" };
+  const key = $("api-key").value.trim();
+  if (key) headers["X-LLM-Key"] = key; // 单次请求透传，服务端不落库
+
+  try {
+    const res = await fetch("/api/sessions", {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const msg = (data.error && data.error.message) || "创建会话失败，请稍后再试。";
+      throw new Error(msg);
+    }
+    hint.textContent = "会话已创建（#" + data.session_id + "），正在生成…";
+    openEventStream(data.session_id);
+  } catch (err) {
+    hint.textContent = "";
+    showError(err.message || "网络异常，无法创建会话。");
+    setGenerating(false);
+  }
+}
+
+function openEventStream(sessionId) {
+  if (genSource) genSource.close();
+  const source = new EventSource(`/api/sessions/${sessionId}/events`);
+  genSource = source;
+
+  source.addEventListener("progress", (ev) => {
+    const payload = JSON.parse(ev.data);
+    appendProgress(payload.message || "处理中…");
+  });
+  source.addEventListener("lesson", (ev) => renderLesson(JSON.parse(ev.data)));
+  source.addEventListener("term", (ev) => renderTerm(JSON.parse(ev.data)));
+  source.addEventListener("quiz", (ev) => renderQuiz(JSON.parse(ev.data)));
+  source.addEventListener("done", (ev) => {
+    renderDone(JSON.parse(ev.data));
+    source.close();
+    genSource = null;
+    setGenerating(false);
+    $("start-hint").textContent = "生成完成，可以查看上面的结果，或再次提交生成新路径。";
+  });
+  source.addEventListener("error", (ev) => {
+    // SSE error 事件：要么是真实错误事件，要么是连接断开（lastEventId 为空）
+    try {
+      const payload = JSON.parse(ev.data || "{}");
+      showError(payload.message || "生成过程中出错，请重试。");
+    } catch (_err) {
+      showError("与服务器的实时连接中断，请刷新页面后重试。");
+    }
+    source.close();
+    genSource = null;
+    setGenerating(false);
+  });
+}
+
 function renderTopics(topics, active) {
   const bar = $("topic-bar");
   bar.innerHTML = "";
@@ -153,27 +364,7 @@ async function loadLinks(topic = "") {
 
 function bindForm() {
   const form = $("start-form");
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const payload = {
-      client_id: ensureClientId(),
-      goal: $("goal").value.trim(),
-      level: $("level").value,
-      weak_points: $("weak_points").value.trim(),
-      daily_minutes: Number($("daily_minutes").value || 30),
-    };
-    if (!payload.goal) {
-      $("start-hint").textContent = "请先写下你的目标。";
-      return;
-    }
-    const box = $("start-result");
-    box.hidden = false;
-    box.innerHTML =
-      "<strong>已记录你的输入（本机）：</strong><pre>" +
-      JSON.stringify(payload, null, 2).replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])) +
-      "</pre><p class='hint'>生成流水线（多 Agent 编排 + SSE 实时进度）将在 M1/M2 接入；" +
-      "当前可用的是策展链接与供应商预设。</p>";
-  });
+  form.addEventListener("submit", startGeneration);
 }
 
 function checkInsecure() {

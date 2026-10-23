@@ -116,6 +116,80 @@ input:focus, select:focus, textarea:focus {
 .result { margin-top: 14px; border-top: 1px dashed var(--line); padding-top: 14px; }
 .result pre { white-space: pre-wrap; background: #f9fafb; padding: 12px; border-radius: 9px; }
 
+/* ── 生成流程（SSE 渲染） ─────────────────────────────── */
+.gen-status { font-weight: 600; margin-bottom: 10px; }
+.gen-progress { margin-bottom: 12px; }
+.progress-line {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 2px 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--line);
+}
+.gen-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.gen-days { display: grid; gap: 14px; margin-top: 10px; }
+.lesson-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #fff;
+}
+.lesson-title { margin: 0 0 8px; font-size: 17px; color: var(--primary-dark); }
+.lesson-body { white-space: pre-wrap; font-size: 14px; line-height: 1.7; color: #374151; }
+.code-snippet {
+  white-space: pre-wrap;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 12.5px;
+  margin: 8px 0 0;
+  overflow-x: auto;
+}
+.term-card {
+  margin-top: 10px;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+.term-name { color: var(--primary-dark); }
+.term-def, .term-analogy, .term-pitfalls { margin-top: 4px; color: #374151; }
+.term-analogy { color: #047857; font-size: 13px; }
+.term-pitfalls { color: #b91c1c; font-size: 13px; }
+.quiz-card {
+  margin-top: 10px;
+  border: 1px dashed var(--warn-line);
+  background: var(--warn-bg);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+.quiz-question { font-weight: 600; color: #374151; }
+.quiz-option { color: #4b5563; margin-top: 2px; }
+.quiz-answer { margin-top: 6px; color: #065f46; font-size: 13px; }
+.done-box {
+  margin-top: 12px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+.done-stats { margin-top: 4px; color: #047857; font-size: 13px; }
+.result-block { margin-top: 16px; }
+.btn-small { padding: 2px 10px; font-size: 12px; }
+
 .topic-bar { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
 .topic-chip {
   font-size: 13px;
