@@ -1,0 +1,156 @@
+:root {
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --text: #1c2333;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --warn-bg: #fff7ed;
+  --warn-line: #fdba74;
+  --ok: #16a34a;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+  line-height: 1.65;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand { font-weight: 700; text-decoration: none; color: var(--text); }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.gh-link { color: var(--primary); text-decoration: none; font-size: 14px; }
+
+.container { max-width: 880px; margin: 0 auto; padding: 24px 20px 60px; }
+
+.hero h1 { font-size: 30px; margin: 8px 0 10px; }
+.lead { color: #374151; font-size: 16px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  margin: 18px 0;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+}
+
+.card h2 { font-size: 19px; margin: 0 0 12px; }
+.muted { color: var(--muted); font-size: 14px; }
+.hint { color: var(--muted); font-size: 13px; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-wide { grid-column: 1 / -1; }
+.field > span { font-size: 14px; font-weight: 600; }
+
+input, select, textarea {
+  font: inherit;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--text);
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid rgba(37, 99, 235, .35);
+  border-color: var(--primary);
+}
+
+.actions { flex-direction: row; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-ghost { background: transparent; }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+
+.badge {
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #f3f4f6;
+  color: #374151;
+}
+.badge-ok { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+.badge-demo { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+
+.warning {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.result { margin-top: 14px; border-top: 1px dashed var(--line); padding-top: 14px; }
+.result pre { white-space: pre-wrap; background: #f9fafb; padding: 12px; border-radius: 9px; }
+
+.topic-bar { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
+.topic-chip {
+  font-size: 13px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+}
+.topic-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+.links { display: grid; gap: 10px; }
+.link-item {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #fff;
+}
+.link-item a { color: var(--primary); font-weight: 600; text-decoration: none; }
+.link-item a:hover { text-decoration: underline; }
+.link-item .why { color: #4b5563; font-size: 14px; margin-top: 4px; }
+.link-item .meta { color: var(--muted); font-size: 12px; margin-top: 6px; }
+
+.site-footer {
+  border-top: 1px solid var(--line);
+  padding: 18px 20px 40px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+.site-footer a { color: var(--primary); text-decoration: none; }
+.site-footer .sep { margin: 0 6px; }
+.footer-note { margin-top: 6px; }
+
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 24px; }
+}

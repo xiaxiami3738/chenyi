@@ -1,0 +1,96 @@
+"""应用入口：``uvicorn app.main:app``。"""
+
+from __future__ import annotations
+
+import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+from . import __version__
+from .api import meta_router
+from .config import BASE_DIR, Settings, get_settings
+from .llm.redact import install_log_redaction, mask_secrets
+from .models import Base, ensure_sqlite_parent, make_engine, make_session_factory
+from .services import seed_curated_links
+
+logger = logging.getLogger("chenyi")
+
+TEMPLATES_DIR = BASE_DIR / "app" / "templates"
+STATIC_DIR = BASE_DIR / "app" / "static"
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    install_log_redaction()
+    settings: Settings = app.state.settings
+
+    ensure_sqlite_parent(settings.database_url)
+    engine = make_engine(settings.database_url)
+    Base.metadata.create_all(engine)
+    factory = make_session_factory(engine)
+
+    session = factory()
+    try:
+        added = seed_curated_links(session, settings.seed_dir)
+    finally:
+        session.close()
+
+    app.state.engine = engine
+    app.state.session_factory = factory
+    logger.info(
+        "chenyi 启动完成 mode=%s db=%s 新增策展链接=%d",
+        settings.app_mode,
+        settings.db_path,
+        added,
+    )
+    try:
+        yield
+    finally:
+        engine.dispose()
+
+
+def create_app(settings: Settings | None = None) -> FastAPI:
+    settings = settings or get_settings()
+    app = FastAPI(
+        title="AI 开发入门向导",
+        description="让普通人快速接手 AI 开发：诊断 → 路径 → 讲解 → 练习 → 复盘，并附人工策展的 GitHub 链接。",
+        version=__version__,
+        lifespan=lifespan,
+    )
+    app.state.settings = settings
+    app.include_router(meta_router)
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+    templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+    templates.env.globals["version"] = __version__
+
+    @app.get("/", response_class=HTMLResponse, include_in_schema=False)
+    def index(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(
+            request,
+            "index.html",
+            {
+                "demo": settings.demo,
+                "app_mode": settings.app_mode,
+                "max_input_chars": settings.max_input_chars,
+                "rate_limit_per_minute": settings.rate_limit_per_minute,
+            },
+        )
+
+    @app.exception_handler(Exception)
+    async def unhandled_exception(_request: Request, exc: Exception) -> JSONResponse:
+        logger.exception("未处理异常：%s", mask_secrets(str(exc)))
+        return JSONResponse(
+            status_code=500,
+            content={"error": {"code": "internal", "message": "服务内部错误，请稍后重试"}},
+        )
+
+    return app
+
+
+app = create_app()

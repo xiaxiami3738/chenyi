@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <h1>让普通人快速接手 AI 开发</h1>
+  <p class="lead">
+    说出你的目标或困惑，向导会带你走完一圈：
+    <strong>诊断 → 学习路径 → 名词讲解 → 动手练习 → 复盘报告</strong>，
+    每一步都附上人工挑选的开源项目链接，让你直接看别人是怎么设计的。
+  </p>
+</section>
+
+<section class="card" id="start-card">
+  <h2>① 说说你现在的情况</h2>
+  <form id="start-form" class="form-grid">
+    <label class="field field-wide">
+      <span>你的目标 / 最想解决的问题</span>
+      <textarea id="goal" name="goal" rows="3" maxlength="{{ max_input_chars }}"
+        placeholder="例如：我是后端转过来的，想搞清楚 RAG 到底是什么、怎么自己搭一个能用的问答机器人。" required></textarea>
+    </label>
+
+    <label class="field">
+      <span>当前水平</span>
+      <select id="level" name="level">
+        <option value="zero">完全零基础</option>
+        <option value="beginner" selected>能写点代码，刚接触 AI</option>
+        <option value="intermediate">用过 API / 做过小项目</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>每天能投入（分钟）</span>
+      <input id="daily_minutes" name="daily_minutes" type="number" min="10" max="480" value="60">
+    </label>
+
+    <label class="field field-wide">
+      <span>自认为的薄弱点（可留空）</span>
+      <input id="weak_points" name="weak_points" type="text" maxlength="500"
+        placeholder="例如：向量检索、Prompt 怎么写、Agent 怎么编排">
+    </label>
+
+    <div class="field field-wide actions">
+      <button type="submit" class="btn btn-primary" id="start-btn">生成我的学习路径</button>
+      <span class="hint" id="start-hint">
+        提示：输入长度上限 {{ max_input_chars }} 字符，同一 IP 每分钟最多 {{ rate_limit_per_minute }} 次生成。
+      </span>
+    </div>
+  </form>
+  <div id="start-result" class="result" hidden></div>
+</section>
+
+<section class="card" id="byok-card">
+  <h2>② 用哪个模型（自带 Key）</h2>
+  <p class="muted">
+    本站不提供、也不保存任何模型 Key。你填的 Key 只存在<strong>你自己的浏览器</strong>里，
+    每次生成时随请求头单次透传，服务端不落库、不写日志。不填也能用：Demo 模式会给出预置示例内容。
+  </p>
+  <div id="insecure-warning" class="warning" hidden>
+    ⚠️ 当前页面不是 HTTPS，填入真实 Key 存在被中间人截获的风险。建议只在 Demo 模式体验，或改用 HTTPS 部署。
+  </div>
+  <div class="form-grid">
+    <label class="field">
+      <span>供应商</span>
+      <select id="provider"></select>
+    </label>
+    <label class="field">
+      <span>模型</span>
+      <input id="model" type="text" placeholder="留空使用该供应商默认模型">
+    </label>
+    <label class="field field-wide">
+      <span>API Key（仅存本机浏览器）</span>
+      <input id="api-key" type="password" autocomplete="off" placeholder="sk-…">
+    </label>
+    <label class="field field-wide">
+      <span>自定义 Base URL（可选，仅支持 https / 本机地址）</span>
+      <input id="base-url" type="url" placeholder="https://your-gateway.example.com/v1">
+    </label>
+    <div class="field field-wide actions">
+      <button type="button" class="btn" id="save-key">保存在本机浏览器</button>
+      <button type="button" class="btn btn-ghost" id="clear-key">清除本机保存</button>
+      <span class="hint" id="key-status"></span>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="links-card">
+  <h2>③ 先看别人怎么做的</h2>
+  <p class="muted">下面这些链接来自项目里的人工策展清单（不是模型现编的 URL）。</p>
+  <div id="topic-bar" class="topic-bar"></div>
+  <div id="links-list" class="links"></div>
+</section>
+{% endblock %}

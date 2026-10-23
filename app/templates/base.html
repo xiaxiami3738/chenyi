@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}AI 开发入门向导{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">AI 开发入门向导</a>
+    <div class="header-right">
+      <span id="mode-badge" class="badge badge-muted">加载中…</span>
+      <a class="gh-link" href="https://github.com/xiaxiami3738/chenyi" rel="noopener noreferrer" target="_blank">GitHub</a>
+    </div>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      开源项目 · MIT License ·
+      <a href="https://github.com/xiaxiami3738/chenyi" rel="noopener noreferrer" target="_blank">xiaxiami3738/chenyi</a>
+      <span class="sep">|</span> v{{ version }}
+    </p>
+    <p class="footer-note">
+      {% if not demo %}
+      真实模式：访客自带模型 Key，Key 只在你的浏览器与服务端单次请求内存在，不落库、不写日志。
+      {% else %}
+      Demo 模式：无需任何 Key，页面内容为预置示例数据。
+      {% endif %}
+    </p>
+    <!-- 备案号占位：取得备案后在此悬挂并链接 https://beian.miit.gov.cn/ -->
+  </footer>
+
+  <script src="/static/app.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
