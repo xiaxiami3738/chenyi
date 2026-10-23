@@ -48,16 +48,17 @@ function showModePopover(data) {
   const title = $("mode-popover-title");
   const body = $("mode-popover-body");
   if (data.demo) {
-    title.textContent = "Demo 模式（当前）";
+    title.textContent = "Demo 模式（当前站点）";
     body.textContent =
-      "无需任何 API Key，也不调用任何真实模型：页面内容来自内置的预置示例数据（FakeLLM），" +
-      "零费用、零额度消耗，适合先体验。想使用真实模型？在② BYOK 卡片选择供应商并填入自己的 Key，" +
-      "提交后即自动切换为真实模式（Key 只保存在你的浏览器 localStorage，不会上传到本站服务器）。";
+      "当前站点运行在 Demo 模式：无论你是否填入 Key，生成的内容都是内置的预置示例数据（FakeLLM），" +
+      "不调用任何真实模型，零费用、零额度消耗。是否真实模式由站长在服务器端决定，与你在浏览器里保存什么无关。" +
+      "你现在填的 Key 只会保存在你自己的浏览器 localStorage，本站不会上传、不会落库、Demo 模式下也不会被调用。";
   } else {
-    title.textContent = "真实模式（当前）";
+    title.textContent = "真实模式（当前站点）";
     body.textContent =
-      "你自带模型 Key（BYOK）：提交时 Key 仅在单次请求中传给本站，本站不落库、不写日志，" +
-      "只在服务端转发给所选模型（如 DeepSeek/Qwen/GLM 等），随后即被丢弃。可用模型由你选择的供应商决定。";
+      "站点已开启真实模式（BYOK）：每次生成你必须自带模型 Key（X-LLM-Key 请求头单次透传），" +
+      "本站不落库、不写日志，只在服务端转发给你选择的供应商（如 DeepSeek/Qwen/GLM 等），随后即被丢弃。" +
+      "可用模型由你选择的供应商决定。";
   }
   pop.hidden = false;
   $("mode-badge").setAttribute("aria-expanded", "true");
