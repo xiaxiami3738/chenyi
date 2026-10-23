@@ -20,8 +20,10 @@
 | 多 Agent 闭环 | 诊断 → 规划 → 讲解 → 出题 → 判分 → 复盘，每一步独立、可校验、可降级 |
 | 名词卡 | 用类比讲清 AI 开发术语，并给出常见误区 |
 | 动手练习 | 选择/填空/简答三类题；客观题规则判分，简答题按评分要点判分 |
-| 人工策展链接 | 只推荐人工审核过的 GitHub 项目；**模型不允许生成 URL**（防幻觉、防钓鱼） |
+| 手工策展链接 | 只推荐人工审核过的 GitHub 项目；**模型不允许生成 URL**（防幻觉、防钓鱼） |
+| 知识库检索问答 | 离线开源书《深入理解 AI Agent》（Apache-2.0 已署名）+ 术语卡 + 策展链接，本地检索**零 Token** 带出处回答 |
 | BYOK | 访客自带模型 Key，站点不提供、不保存；Key 只在浏览器与单次请求里存在 |
+| 服务端加密代存（可选） | 真实模式 + HTTPS 下可把 Key 用服务器主密钥（Fernet）加密保存，之后免填生成；只存密文不落明文 |
 | Demo 模式 | 没有任何 Key 也能完整跑通流程，方便部署验证与演示 |
 | 匿名可用 | 无需登录，用浏览器本地 `client_id` 归集历史，可导出 Markdown |
 
@@ -80,6 +82,7 @@ pytest -q
 | `MAX_CONCURRENCY` | `2` | 同时进行的模型调用数上限 |
 | `REQUEST_TIMEOUT_SECONDS` | `120` | 单次上游模型调用超时 |
 | `MAX_INPUT_CHARS` | `8000` | 用户输入长度上限 |
+| `VAULT_MASTER_KEY` | 空 | **可选**：服务端加密代存的主密钥（任意长随机串）。留空则代存功能关闭，纯浏览器 BYOK 不受影响 |
 
 > 项目**不允许**任何形式的 `api_key` 环境变量。这是设计约束，并有测试守着（`tests/unit/test_no_key_storage.py`）。
 
@@ -90,6 +93,13 @@ pytest -q
 3. 访问日志经过 `app/llm/redact.py` 正则脱敏（`sk-…`、`Bearer …`、`X-LLM-Key` 一律替换为 `***`）；
 4. 自定义 `baseURL` 只允许 `https://`（本机 Ollama 例外），并阻断内网地址（防 SSRF）；
 5. 站点未启用 HTTPS 时，前端显著提示"不要填写生产 Key"。
+
+### 服务端加密代存（M7.3，可选）
+
+- 面向"不想每次填 Key"的访客：在**真实模式（APP_MODE=live）+ HTTPS** 下勾选「服务端加密代存」，把 Key 加密保存到服务器，之后生成学习路径时勾选「使用我已保存到服务器的 Key」即可免填；
+- 落库的只有 Fernet 密文（`cipher_blob`），主密钥来自环境变量 `VAULT_MASTER_KEY`，**绝不明文写库、不进 Settings、不打日志**；更换主密钥后旧密文将无法解密（对应接口给出手动重新保存的提示）；
+- 安全门控：Demo 模式 → 403；未配置主密钥 → 503；非 HTTPS → 403；
+- 代存表 `vault_entries` 是唯一例外表，列名刻意避开凭证字面命名，并有测试守着（`tests/unit/test_no_key_storage.py` 显式开白 + 列白名单断言）。
 
 ## 反向代理与流式输出
 
@@ -114,14 +124,15 @@ bash /srv/chenyi/deploy/deploy.sh
 
 ```
 app/
-  api/         HTTP 路由（元信息 / 生成 / 作答 / 复盘）
+  api/         HTTP 路由（元信息 / 生成 / 作答 / 复盘 / 知识库检索 / 代存）
   agents/      六个角色的 Agent 实现
   llm/         模型客户端、供应商预设、脱敏、FakeLLM
   models/      SQLAlchemy 数据模型
-  services/    业务服务（会话、链接、判分、限流）
+  services/    业务服务（会话、链接、判分、限流、知识库、代存）
   prompts/     提示词模板（版本化）
   templates/   Jinja2 页面
   static/      原生 JS + CSS
+data/kb/        本地知识库（开源书 Markdown + LICENSE + 署名）
 data/seed/     人工策展数据（术语表、GitHub 链接清单）
 tests/         unit / integration（FakeLLM，不依赖真实 Key）
 e2e/           Playwright 端到端测试
@@ -144,6 +155,7 @@ deploy/        Dockerfile / compose / nginx / 部署脚本
 - [x] M4 集成 / E2E 全覆盖（限流、脱敏、防幻觉断言）
 - [x] M5 GitHub Actions 自动部署（push main 即 SSH 部署到 ECS）
 - [x] M6 README / 架构图 / 演示截图 / 策展数据扩充（51 条链接 + 22 条术语）
+- [x] M7 知识库检索问答 + 首页查询浏览改版 + 服务端加密 Key 代存（可选）+ 自动 git 习惯
 
 ## 演示截图
 

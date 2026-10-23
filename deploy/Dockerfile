@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY data/seed ./data/seed
+COPY data/kb ./data/kb
 
 RUN useradd --create-home --uid 10001 appuser \
     && mkdir -p /app/data \

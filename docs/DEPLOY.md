@@ -83,6 +83,29 @@ bash deploy/deploy.sh
 | `REQUEST_TIMEOUT_SECONDS` | `120` | LLM 请求超时 |
 | `MAX_INPUT_CHARS` | `8000` | 用户目标最大长度 |
 | `TRUST_PROXY_HEADERS` | `true` | 信任 Nginx X-Forwarded-For |
+| `VAULT_MASTER_KEY` | 空 | 服务端加密代存主密钥（任意长随机串）；留空则代存功能关闭 |
+
+## 服务端加密代存（M7.3，可选）
+
+「服务端加密代存」允许访客把模型 Key 用服务器主密钥加密保存、之后免填生成。启用条件：
+
+1. `APP_MODE=live`（Demo 模式不调用真实模型，代存无意义）；
+2. 服务器 `.env`（`/srv/chenyi/.env`）设置 `VAULT_MASTER_KEY=<任意长随机串>`，如 `openssl rand -base64 32`；
+3. HTTPS 就绪（见下节）——代存写接口强制 HTTPS，否则 403。
+
+配置后重启：
+
+```bash
+cd /srv/chenyi
+# 首次需把 VAULT_MASTER_KEY 写进 deploy 目录的 .env（别提交进 git）
+echo 'VAULT_MASTER_KEY=...' >> deploy/.env
+bash deploy/deploy.sh
+```
+
+两点提醒：
+
+- **别把 `VAULT_MASTER_KEY` 提交进 git**（`deploy/.env` 已在 .gitignore）。
+- 主密钥更换会让旧密文无法解密：访客会看到「无法解密代存的 Key，请重新保存」的提示，重新保存即可，不影响纯浏览器 BYOK。
 
 ## HTTPS 升级（预留）
 
