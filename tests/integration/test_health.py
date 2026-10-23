@@ -25,6 +25,16 @@ def test_index_page_renders(client: TestClient) -> None:
     assert "beian.miit.gov.cn" in response.text
 
 
+def test_index_has_kb_search_interface(client: TestClient) -> None:
+    """首页以查询浏览为主：搜索框 + 浏览区先于生成卡片出现。"""
+    response = client.get("/")
+    html = response.text
+    assert "kb-form" in html
+    assert "kb-input" in html
+    assert "browse-card" in html
+    assert html.index("kb-form") < html.index("start-card")
+
+
 def test_static_assets_served(client: TestClient) -> None:
     for path in ("/static/style.css", "/static/app.js"):
         response = client.get(path)

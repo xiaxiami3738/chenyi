@@ -412,6 +412,163 @@ function bindForm() {
   form.addEventListener("submit", startGeneration);
 }
 
+/* ── M7.2：知识库检索与浏览 ───────────────────────────── */
+
+let kbAbort = null; // 检索请求的 AbortController，快速连打时取消上一个
+
+const KIND_LABEL = { chapter: "章节", term: "名词卡", link: "链接" };
+
+function renderKbResults(data) {
+  const box = $("kb-results");
+  box.hidden = false;
+  box.innerHTML = "";
+  if (!data.total) {
+    const empty = textEl("p", "muted", `没有找到与「${data.query}」相关的内容，换个问法试试。`);
+    box.appendChild(empty);
+    return;
+  }
+  box.appendChild(textEl("div", "kb-result-count", `找到 ${data.total} 条相关结果（本地知识库，零 Token 消耗）：`));
+  data.results.forEach((hit) => {
+    const item = textEl("article", "kb-hit", "");
+    const head = textEl("div", "kb-hit-head", "");
+    const kind = document.createElement("span");
+    kind.className = "kb-kind";
+    kind.textContent = KIND_LABEL[hit.kind] || hit.kind;
+    const title = textEl("strong", "kb-hit-title", hit.title);
+    head.appendChild(kind);
+    head.appendChild(title);
+    item.appendChild(head);
+    item.appendChild(textEl("p", "kb-hit-snippet", hit.snippet));
+    const meta = textEl("div", "meta", `出处：${hit.source}` + (hit.topic ? ` · ${hit.topic}` : ""));
+    item.appendChild(meta);
+    if (hit.url) {
+      const a = document.createElement("a");
+      a.href = hit.url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.className = "kb-hit-url";
+      a.textContent = "打开项目 →";
+      item.appendChild(a);
+    }
+    box.appendChild(item);
+  });
+}
+
+async function runKbSearch(query) {
+  const trim = query.trim();
+  const box = $("kb-results");
+  if (!trim) {
+    box.hidden = true;
+    box.innerHTML = "";
+    return;
+  }
+  $("kb-hint").textContent = "正在本地检索…";
+  if (kbAbort) kbAbort.abort();
+  kbAbort = new AbortController();
+  try {
+    const res = await fetch(`/api/kb/search?q=${encodeURIComponent(trim)}&limit=8`, {
+      signal: kbAbort.signal,
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const msg = (data.error && data.error.message) || "检索失败，请稍后再试。";
+      throw new Error(msg);
+    }
+    renderKbResults(data);
+    $("kb-hint").textContent = "本地知识库即时检索 · 不消耗任何模型额度 · 结果带出处可核对";
+  } catch (err) {
+    if (err.name === "AbortError") return; // 被新输入打断，忽略
+    box.hidden = false;
+    box.innerHTML = "";
+    box.appendChild(textEl("p", "muted", "⚠️ " + (err.message || "检索失败。")));
+    $("kb-hint").textContent = "本地知识库即时检索 · 不消耗任何模型额度 · 结果带出处可核对";
+  }
+}
+
+function bindKbSearch() {
+  const form = $("kb-form");
+  if (!form) return;
+  form.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    runKbSearch($("kb-input").value);
+  });
+  // 输入停顿 350ms 后即时检索
+  let timer = null;
+  $("kb-input").addEventListener("input", (ev) => {
+    clearTimeout(timer);
+    const value = ev.target.value;
+    timer = setTimeout(() => runKbSearch(value), 350);
+  });
+}
+
+function renderBrowse(data) {
+  const browse = $("browse-list");
+  const topics = $("kb-topics");
+  browse.innerHTML = "";
+  topics.innerHTML = "";
+  if (!data.chapters.length && !data.terms_topics.length) {
+    browse.innerHTML = "<p class='muted'>知识库暂时为空。</p>";
+    return;
+  }
+  // 主题导航：名词卡主题 → 直接检索；链接主题 → 跳到链接区按主题筛选
+  const makeTopicChip = (label, kind) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "topic-chip";
+    chip.textContent = label;
+    chip.addEventListener("click", () => {
+      if (kind === "term") {
+        runKbSearch(label);
+        $("kb-results").scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        loadLinks(label);
+        $("links-list").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+    return chip;
+  };
+  data.terms_topics.forEach((t) => topics.appendChild(makeTopicChip("📖 " + t, "term")));
+  data.links_topics.forEach((t) => topics.appendChild(makeTopicChip("🧰 " + t, "link")));
+
+  // 章节目录：<details> 折叠每个章节小节
+  data.chapters.forEach((ch) => {
+    const item = document.createElement("details");
+    item.className = "browse-chapter";
+    const summary = document.createElement("summary");
+    summary.textContent = ch.title || ch.file;
+    item.appendChild(summary);
+    if (ch.sections && ch.sections.length) {
+      const ul = document.createElement("ul");
+      ul.className = "browse-sections";
+      ch.sections.forEach((s) => {
+        const li = document.createElement("li");
+        const a = document.createElement("button");
+        a.type = "button";
+        a.className = "browse-section-link";
+        a.textContent = s;
+        a.addEventListener("click", () => runKbSearch(s));
+        li.appendChild(a);
+        ul.appendChild(li);
+      });
+      item.appendChild(ul);
+    }
+    browse.appendChild(item);
+  });
+}
+
+async function loadBrowse() {
+  const browse = $("browse-list");
+  if (!browse) return;
+  browse.innerHTML = "<p class='muted'>加载中…</p>";
+  try {
+    const res = await fetch("/api/kb/overview");
+    const data = await res.json();
+    renderBrowse(data);
+  } catch (err) {
+    browse.innerHTML = "<p class='muted'>知识库加载失败，请刷新重试。</p>";
+  }
+}
+
 function checkInsecure() {
   if (location.protocol !== "https:" && !["localhost", "127.0.0.1"].includes(location.hostname)) {
     $("insecure-warning").hidden = false;
@@ -574,6 +731,8 @@ document.addEventListener("DOMContentLoaded", () => {
   restoreKeyFields();
   loadLinks("");
   bindForm();
+  bindKbSearch();
+  loadBrowse();
   checkInsecure();
   $("provider").addEventListener("change", syncProviderDefaults);
   $("save-key").addEventListener("click", saveKeyFields);

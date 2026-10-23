@@ -3,14 +3,36 @@
 <section class="hero">
   <h1>让普通人快速接手 AI 开发</h1>
   <p class="lead">
-    说出你的目标或困惑，向导会带你走完一圈：
-    <strong>诊断 → 学习路径 → 名词讲解 → 动手练习 → 复盘报告</strong>，
-    每一步都附上人工挑选的开源项目链接，让你直接看别人是怎么设计的。
+    想先弄清楚一个概念？直接在上面的知识库搜索框里提问，<strong>零费用</strong>获得带出处的回答。
+    这里有 AI 开发入门必学的主题、章节和名词卡，也随时可以生成一条属于你的学习路径。
   </p>
+  <form id="kb-form" class="kb-search" role="search">
+    <input id="kb-input" type="search" autocomplete="off" maxlength="200"
+      placeholder="例如：什么是 Agent？RAG 是什么？提示工程怎么入门？"
+      aria-label="搜索知识库">
+    <button type="submit" class="btn btn-primary" id="kb-btn">搜索</button>
+  </form>
+  <p class="hint" id="kb-hint">本地知识库即时检索 · 不消耗任何模型额度 · 结果带出处可核对</p>
+  <div id="kb-results" class="kb-results" hidden></div>
+</section>
+
+<section class="card" id="browse-card">
+  <h2>📚 知识库浏览</h2>
+  <p class="muted">
+    想要系统了解 AI 开发？从下面这些主题和章节开始。内容来自开源书《深入理解 AI Agent》
+    <a href="https://github.com/bojieli/ai-agent-book" rel="noopener noreferrer" target="_blank">（Apache-2.0，已署名）</a>。
+  </p>
+  <div id="kb-topics" class="topic-bar"></div>
+  <div id="browse-list" class="browse-list"></div>
 </section>
 
 <section class="card" id="start-card">
-  <h2>① 说说你现在的情况</h2>
+  <h2>🎯 想生成一条属于你的学习路径？</h2>
+  <p class="muted">告诉我你的目标、水平和每天能投入的时间，向导会带你走完一圈：</p>
+  <p class="muted">
+    <strong>诊断 → 学习路径 → 名词讲解 → 动手练习 → 复盘报告</strong>，
+    每一步都附上人工挑选的开源项目链接，让你直接看别人是怎么设计的。
+  </p>
   <form id="start-form" class="form-grid">
     <label class="field field-wide">
       <span>你的目标 / 最想解决的问题</span>
@@ -59,10 +81,10 @@
 </section>
 
 <section class="card" id="byok-card">
-  <h2>② 用哪个模型（自带 Key）</h2>
+  <h2>🔑 用哪个模型（自带 Key）</h2>
   <p class="muted">
-    本站不提供、也不保存任何模型 Key。你填的 Key 只存在<strong>你自己的浏览器</strong>里，
-    每次生成时随请求头单次透传，服务端不落库、不写日志。不填也能用：Demo 模式会给出预置示例内容。
+    知识库问答<strong>不需要任何 Key</strong>。只有想生成个性化学习路径时才需要模型 Key：
+    你填的 Key 只存在<strong>你自己的浏览器</strong>里，每次生成时随请求头单次透传，服务端不落库、不写日志。
   </p>
   <div id="insecure-warning" class="warning" hidden>
     ⚠️ 当前页面不是 HTTPS，填入真实 Key 存在被中间人截获的风险。建议只在 Demo 模式体验，或改用 HTTPS 部署。
@@ -93,7 +115,7 @@
 </section>
 
 <section class="card" id="links-card">
-  <h2>③ 先看别人怎么做的</h2>
+  <h2>🧰 先看别人怎么做的</h2>
   <p class="muted">下面这些链接来自项目里的人工策展清单（不是模型现编的 URL）。</p>
   <div id="topic-bar" class="topic-bar"></div>
   <div id="links-list" class="links"></div>

@@ -160,6 +160,7 @@ def _heading_level(line: str) -> int:
 
 
 _MD_STRIP = re.compile(r"[`*_~#>\[\]()!|\\]")
+_ATTR_STRIP = re.compile(r"\s*\{[^}]*\}\s*")
 
 
 def _clean_text(raw: str) -> str:
@@ -167,6 +168,11 @@ def _clean_text(raw: str) -> str:
     text = _MD_STRIP.sub("", raw)
     text = re.sub(r"\s+", " ", text)
     return text.strip()
+
+
+def _clean_title(raw: str) -> str:
+    """标题清理：额外去掉 ``{.unnumbered}`` 这类属性标记。"""
+    return _clean_text(_ATTR_STRIP.sub(" ", raw))
 
 
 def parse_chapters(kb_dir: Path) -> list[KBDoc]:
@@ -180,23 +186,27 @@ def parse_chapters(kb_dir: Path) -> list[KBDoc]:
         if path.name in SKIP_FILES:
             continue
         lines = path.read_text(encoding="utf-8").splitlines()
+        file_title = ""  # 文件级大标题（# 开头），用作 chapter 的 topic
         sections: list[tuple[str, list[str]]] = []
         current_title, current_lines = "", []
         for line in lines:
             level = _heading_level(line)
+            if level == 1 and not file_title:
+                file_title = _clean_title(line[level:].strip())
             if level >= 2:
                 if current_title or current_lines:
                     sections.append((current_title, current_lines))
-                current_title = _clean_text(line[level:].strip())
+                current_title = _clean_title(line[level:].strip())
                 current_lines = []
-            elif level == 1 and not current_title:
-                # 文件级大标题：作为首个 section 的兜底标题
-                current_title = _clean_text(line[level:].strip())
+            elif level == 1:
+                # 罕见：文件内多个 # 标题，忽略
+                continue
             else:
                 current_lines.append(line)
         if current_title or current_lines:
             sections.append((current_title, current_lines))
 
+        topic = file_title or path.stem
         for title, body_lines in sections:
             body = _clean_text("\n".join(body_lines))
             if not body:
@@ -204,11 +214,11 @@ def parse_chapters(kb_dir: Path) -> list[KBDoc]:
             docs.append(
                 KBDoc(
                     kind="chapter",
-                    title=title or path.stem,
+                    title=title or topic,
                     body=body,
                     source=path.name,
-                    topic=path.stem,
-                    section=title,
+                    topic=topic,
+                    section=title or topic,
                 )
             )
     return docs

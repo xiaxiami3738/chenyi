@@ -43,6 +43,57 @@ body {
 .hero h1 { font-size: 30px; margin: 8px 0 10px; }
 .lead { color: #374151; font-size: 16px; }
 
+/* ── M7.2：首页知识库检索与浏览 ─────────────────────── */
+.kb-search { display: flex; gap: 10px; margin-top: 18px; max-width: 640px; }
+.kb-search input { flex: 1; font-size: 16px; padding: 12px 14px; border-radius: 12px; }
+.kb-search .btn { flex-shrink: 0; padding: 12px 22px; }
+
+.kb-results { margin-top: 16px; display: grid; gap: 10px; max-width: 640px; }
+.kb-result-count { color: var(--muted); font-size: 13px; margin: 0; }
+.kb-hit {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  text-align: left;
+}
+.kb-hit-head { display: flex; align-items: baseline; gap: 8px; }
+.kb-kind {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+}
+.kb-hit-title { color: var(--text); font-size: 15px; }
+.kb-hit-snippet { margin: 6px 0 2px; font-size: 14px; color: #374151; }
+.kb-hit-url { font-size: 13px; color: var(--primary); text-decoration: none; }
+.kb-hit-url:hover { text-decoration: underline; }
+
+.browse-list { display: grid; gap: 8px; margin-top: 10px; }
+.browse-chapter {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #fff;
+}
+.browse-chapter summary { cursor: pointer; font-weight: 600; font-size: 15px; color: var(--text); }
+.browse-sections { margin: 8px 0 2px; padding-left: 4px; list-style: none; display: grid; gap: 2px; }
+.browse-section-link {
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-size: 14px;
+  text-align: left;
+  padding: 3px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+}
+.browse-section-link:hover { background: #eff6ff; }
+
 .card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -284,4 +335,5 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 640px) {
   .form-grid { grid-template-columns: 1fr; }
   .hero h1 { font-size: 24px; }
+  .kb-search { flex-direction: column; }
 }
