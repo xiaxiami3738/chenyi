@@ -15,13 +15,15 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Literal
 
-from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi import APIRouter, Query, Request
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from .. import __version__
 from ..llm.redact import mask_secrets
-from ..models.tables import AgentRun, LearnSession
+from ..models.tables import AgentRun, LearnSession, Plan
 from ..services.pipeline import PipelineError, build_llm, build_summary, run_generation
 
 logger = logging.getLogger("chenyi.sessions")
@@ -274,5 +276,174 @@ def get_session(request: Request, session_id: int) -> JSONResponse:
         summary = build_summary(session, session_id)
         summary["mode"] = request.app.state.settings.app_mode
         return JSONResponse(status_code=200, content=summary)
+    finally:
+        session.close()
+
+
+# ── 历史列表与 Markdown 导出（M3） ────────────────────────
+
+
+@router.get("/sessions")
+def list_sessions(
+    request: Request,
+    client_id: str | None = Query(default=None, min_length=1, max_length=64),
+    limit: int = Query(default=50, ge=1, le=100),
+) -> JSONResponse:
+    """按匿名 client_id 列出历史会话（新→旧），带轻量统计。
+
+    隔离原则：只返回该 client_id 自己的会话，绝不返回别人的。
+    """
+    if not client_id:
+        return _error(400, "missing_client_id", "缺少 client_id 参数。")
+
+    session = _open_session(request)
+    try:
+        rows = (
+            session.scalars(
+                select(LearnSession)
+                .where(LearnSession.client_id == client_id)
+                .options(
+                    selectinload(LearnSession.plans).selectinload(Plan.lessons),
+                    selectinload(LearnSession.plans).selectinload(Plan.terms),
+                    selectinload(LearnSession.plans).selectinload(Plan.quiz_items),
+                )
+                .order_by(LearnSession.id.desc())
+                .limit(limit)
+            )
+            .all()
+        )
+        # selectinload 已预加载关系，行对象脱管后仍可读属性
+        result = []
+        for row in rows:
+            result.append(
+                {
+                    "id": row.id,
+                    "goal": row.goal,
+                    "level": row.level,
+                    "status": row.status,
+                    "daily_minutes": row.daily_minutes,
+                    "created_at": row.created_at.isoformat() if row.created_at else None,
+                    "stats": {
+                        "plan_count": len(row.plans),
+                        "lesson_count": sum(1 for p in row.plans if p.lessons),
+                        "term_count": sum(len(p.terms) for p in row.plans),
+                        "quiz_count": sum(len(p.quiz_items) for p in row.plans),
+                    },
+                }
+            )
+        return JSONResponse(status_code=200, content={"sessions": result})
+    finally:
+        session.close()
+
+
+_LEVEL_LABELS = {
+    "zero": "完全零基础",
+    "beginner": "能写点代码，刚接触 AI",
+    "intermediate": "用过 API / 做过小项目",
+}
+_KIND_LABELS = {"choice": "选择题", "blank": "填空题", "short": "简答题"}
+
+
+def render_session_markdown(summary: dict) -> str:
+    """把 build_summary 渲染成完整的中文 Markdown 文本（纯字符串模板）。"""
+    session = summary["session"] or {}
+    lines: list[str] = [
+        f"# 学习路径 · 会话 #{session.get('id', '')}",
+        "",
+        f"- **学习目标**：{session.get('goal', '')}",
+        f"- **当前水平**：{_LEVEL_LABELS.get(session.get('level', ''), session.get('level', ''))}",
+        f"- **每日可投入**：{session.get('daily_minutes', '')} 分钟",
+        f"- **生成时间**：{session.get('created_at', '') or '—'}",
+        f"- **状态**：{session.get('status', '')}",
+        "",
+    ]
+
+    plans = summary.get("plans", [])
+    if not plans:
+        lines.append("> 该会话还没有生成出学习计划。")
+        lines.append("")
+    for plan in plans:
+        lines.append(f"## 第 {plan['day_index']} 天 · {plan['topic']}")
+        lines.append("")
+        lines.append(f"- **目标**：{plan.get('objective', '')}")
+        lines.append(f"- **交付物**：{plan.get('deliverable', '')}")
+        lines.append("")
+
+        lesson = plan.get("lesson")
+        if lesson:
+            lines.append(f"### 讲义：{lesson.get('title', '')}")
+            lines.append("")
+            lines.append(lesson.get("body_md", "") or "（无正文）")
+            lines.append("")
+            for snippet in lesson.get("code_snippets", []):
+                lines.append("```python")
+                lines.append(snippet)
+                lines.append("```")
+                lines.append("")
+
+        terms = plan.get("terms", [])
+        if terms:
+            lines.append("### 名词卡")
+            lines.append("")
+            for term in terms:
+                lines.append(
+                    f"- **{term.get('term', '')}**：{term.get('definition', '')}"
+                )
+                if term.get("analogy"):
+                    lines.append(f"  - 类比：{term['analogy']}")
+                if term.get("pitfalls"):
+                    lines.append(f"  - 注意：{term['pitfalls']}")
+            lines.append("")
+
+        quiz_items = plan.get("quiz_items", [])
+        if quiz_items:
+            lines.append("### 练习")
+            lines.append("")
+            for item in quiz_items:
+                kind = _KIND_LABELS.get(item.get("kind", ""), item.get("kind", ""))
+                lines.append(f"**{kind}** {item.get('question', '')}")
+                for opt in item.get("options", []):
+                    lines.append(f"- {opt}")
+                lines.append(f"**参考答案**：{item.get('answer', '')}")
+                if item.get("rubric"):
+                    lines.append(f"**评分要点**：{item['rubric']}")
+                lines.append("")
+
+    links = summary.get("links", [])
+    lines.append("## 延伸阅读（人工策展）")
+    lines.append("")
+    if not links:
+        lines.append("> 暂无匹配的策展链接。")
+    for link in links:
+        lines.append(
+            f"- [{link.get('title', '')}]({link.get('url', '')}) —— "
+            f"{link.get('why', '')}（主题：{link.get('topic', '')}）"
+        )
+    lines.append("")
+    return "\n".join(lines)
+
+
+@router.get("/sessions/{session_id}/export.md", response_model=None)
+def export_session_markdown(request: Request, session_id: int) -> Response:
+    """导出会话结果为 Markdown 附件（plan-{id}.md）。
+
+    说明：此处不校验 client_id —— 会话 id 不可枚举（数据库自增 + 需要先建会话
+    才能导出），且 demo 模式不含敏感数据；如后续需要更严格的隔离，
+    可在导出时加一个 client_id 校验参数。
+    """
+    session = _open_session(request)
+    try:
+        row = session.get(LearnSession, session_id)
+        if row is None:
+            return _error(404, "not_found", "会话不存在。")
+        summary = build_summary(session, session_id)
+        markdown = render_session_markdown(summary)
+        return Response(
+            content=markdown,
+            media_type="text/markdown; charset=utf-8",
+            headers={
+                "Content-Disposition": f'attachment; filename="plan-{session_id}.md"'
+            },
+        )
     finally:
         session.close()

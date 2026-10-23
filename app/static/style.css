@@ -213,13 +213,36 @@ input:focus, select:focus, textarea:focus {
 .link-item .why { color: #4b5563; font-size: 14px; margin-top: 4px; }
 .link-item .meta { color: var(--muted); font-size: 12px; margin-top: 6px; }
 
-.site-footer {
-  border-top: 1px solid var(--line);
-  padding: 18px 20px 40px;
-  text-align: center;
+.site-footer { border-top: 1px solid var(--line); padding: 18px 20px 40px; text-align: center; color: var(--muted); font-size: 13px; }
+
+/* ── 历史页与导航（M3） ─────────────────────────────── */
+.site-nav { display: flex; align-items: center; gap: 6px; }
+.nav-link {
   color: var(--muted);
-  font-size: 13px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
 }
+.nav-link:hover { color: var(--primary); background: #eff6ff; }
+
+.history-list { display: grid; gap: 12px; }
+.session-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.session-card:hover { border-color: var(--primary); }
+.session-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.session-card-top .badge { flex-shrink: 0; }
+.session-goal { margin: 0 0 6px; font-size: 16px; line-height: 1.5; }
+.session-meta { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+.session-actions { display: flex; gap: 8px; }
+.detail-section { margin: 14px 0 8px; font-size: 15px; }
 .site-footer a { color: var(--primary); text-decoration: none; }
 .site-footer .sep { margin: 0 6px; }
 .footer-note { margin-top: 6px; }

@@ -105,6 +105,7 @@ function clearKeyFields() {
 /* ── 生成主流程：提交 → 建会话 → SSE 逐条渲染 ───────────────── */
 
 let genSource = null; // 当前 EventSource，便于中断
+let currentSessionId = null; // 最近一次成功生成的 session_id（供下载 Markdown）
 
 function currentPayload() {
   return {
@@ -134,9 +135,12 @@ function clearOutput() {
   $("gen-error").hidden = true;
   $("gen-progress").hidden = true;
   $("gen-links").hidden = true;
+  const actions = $("gen-actions");
+  if (actions) actions.hidden = true;
   $("gen-progress").innerHTML = "";
   $("gen-days").innerHTML = "";
   $("gen-links").innerHTML = "";
+  currentSessionId = null;
 }
 
 function appendProgress(message) {
@@ -240,6 +244,10 @@ function renderDone(payload) {
       box.appendChild(item);
     });
   }
+
+  // 生成完成：亮出「下载 Markdown / 查看历史」操作按钮
+  const actions = $("gen-actions");
+  if (actions) actions.hidden = false;
 }
 
 async function startGeneration(event) {
@@ -271,6 +279,7 @@ async function startGeneration(event) {
       throw new Error(msg);
     }
     hint.textContent = "会话已创建（#" + data.session_id + "），正在生成…";
+    currentSessionId = data.session_id;
     openEventStream(data.session_id);
   } catch (err) {
     hint.textContent = "";
@@ -373,9 +382,158 @@ function checkInsecure() {
   }
 }
 
+/* ── M3：下载 Markdown 与历史页 ───────────────────────── */
+
+async function downloadMarkdown() {
+  /* 把最近一次生成的会话导出为 Markdown 附件（export 是 GET，不进创建限流）。 */
+  if (!currentSessionId) {
+    showError("还没有可导出的会话，请先生成一次。");
+    return;
+  }
+  try {
+    const res = await fetch(`/api/sessions/${currentSessionId}/export.md`);
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      const msg = (data && data.error && data.error.message) || "导出失败，请稍后再试。";
+      throw new Error(msg);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `plan-${currentSessionId}.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    showError(err.message || "下载失败。");
+  }
+}
+
+function fmtTime(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString("zh-CN", { hour12: false });
+}
+
+const STATUS_LABEL = { generating: "生成中", ready: "已完成", failed: "失败" };
+
+function sessionBadge(status) {
+  const badge = document.createElement("span");
+  badge.className = "badge " + (status === "ready" ? "badge-ok" : "badge-muted");
+  badge.textContent = STATUS_LABEL[status] || status;
+  return badge;
+}
+
+function buildSessionMeta(s) {
+  const st = s.stats || {};
+  return `${fmtTime(s.created_at)} · 计划 ${st.plan_count || 0} 天 · 讲义 ${st.lesson_count || 0} 篇 · 名词 ${st.term_count || 0} 张 · 练习 ${st.quiz_count || 0} 道`;
+}
+
+function sessionMarkdownBtn(sessionId, label) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "btn btn-ghost btn-small";
+  btn.textContent = label || "📥 下载 Markdown";
+  btn.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    currentSessionId = sessionId;
+    downloadMarkdown();
+  });
+  return btn;
+}
+
+async function loadHistory() {
+  /* 历史页：按当前 client_id 拉取会话列表并渲染卡片。 */
+  const list = $("history-list");
+  if (!list) return;
+  list.innerHTML = "<p class='muted'>加载中…</p>";
+  try {
+    const clientId = ensureClientId();
+    const res = await fetch(`/api/sessions?client_id=${encodeURIComponent(clientId)}&limit=50`);
+    const data = await res.json();
+    if (!res.ok) {
+      const msg = (data.error && data.error.message) || "加载历史失败，请稍后再试。";
+      throw new Error(msg);
+    }
+    const sessions = data.sessions || [];
+    $("history-empty").hidden = sessions.length > 0;
+    list.innerHTML = "";
+    sessions.forEach((s) => {
+      const card = document.createElement("article");
+      card.className = "session-card";
+      const top = document.createElement("div");
+      top.className = "session-card-top";
+      top.append(textEl("h3", "session-goal", s.goal || "（无目标）"), sessionBadge(s.status));
+      card.append(top, textEl("p", "session-meta", buildSessionMeta(s)));
+      const actions = textEl("div", "session-actions", "");
+      actions.appendChild(sessionMarkdownBtn(s.id));
+      card.appendChild(actions);
+      card.addEventListener("click", () => showHistoryDetail(s.id));
+      list.appendChild(card);
+    });
+  } catch (err) {
+    list.innerHTML = `<p class='muted'>${err.message}</p>`;
+  }
+}
+
+function renderHistoryDetail(summary) {
+  /* 复用 /api/sessions/{id} 摘要：目标 + 状态 + 统计 + 下载按钮 + 策展链接。 */
+  const root = $("detail-root");
+  root.innerHTML = "";
+  const s = summary.session || {};
+  const st = summary.stats || {};
+  root.appendChild(textEl("h3", "session-goal", s.goal || "（无目标）"));
+  root.appendChild(
+    textEl("p", "session-meta", `状态：${STATUS_LABEL[s.status] || s.status} · 生成于 ${fmtTime(s.created_at)}`)
+  );
+  root.appendChild(textEl("p", "session-meta", buildSessionMeta({ stats: st })));
+  root.appendChild(sessionMarkdownBtn(s.id));
+  const links = summary.links || [];
+  if (links.length) {
+    root.appendChild(textEl("h4", "detail-section", "🗂 配套开源项目（人工策展）"));
+    links.forEach((link) => {
+      const item = textEl("div", "link-item", "");
+      const a = document.createElement("a");
+      a.href = link.url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = link.title;
+      item.append(a, textEl("div", "why", link.why || ""));
+      root.appendChild(item);
+    });
+  }
+}
+
+async function showHistoryDetail(sessionId) {
+  /* 点击历史卡片：拉取该会话摘要并展示在当前页内。 */
+  const detail = $("history-detail");
+  detail.hidden = false;
+  $("detail-root").innerHTML = "<p class='muted'>加载中…</p>";
+  try {
+    const res = await fetch(`/api/sessions/${sessionId}`);
+    const data = await res.json();
+    if (!res.ok) {
+      const msg = (data.error && data.error.message) || "加载详情失败。";
+      throw new Error(msg);
+    }
+    renderHistoryDetail(data);
+    detail.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (err) {
+    $("detail-root").innerHTML = `<p class='muted'>${err.message}</p>`;
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   ensureClientId();
   loadHealth();
+  if ($("history-list")) {
+    // 历史页：只做列表加载与刷新，不触碰首页专属元素
+    loadHistory();
+    $("history-refresh").addEventListener("click", loadHistory);
+    return;
+  }
   loadProviders();
   restoreKeyFields();
   loadLinks("");
@@ -384,4 +542,6 @@ document.addEventListener("DOMContentLoaded", () => {
   $("provider").addEventListener("change", syncProviderDefaults);
   $("save-key").addEventListener("click", saveKeyFields);
   $("clear-key").addEventListener("click", clearKeyFields);
+  const downloadBtn = $("download-md");
+  if (downloadBtn) downloadBtn.addEventListener("click", downloadMarkdown);
 });

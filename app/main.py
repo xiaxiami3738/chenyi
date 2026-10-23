@@ -15,6 +15,7 @@ from fastapi.templating import Jinja2Templates
 
 from . import __version__
 from .api import meta_router, sessions_router
+from .api.ratelimit import RateLimitMiddleware
 from .config import BASE_DIR, Settings, get_settings
 from .llm.redact import install_log_redaction, mask_secrets
 from .models import Base, ensure_sqlite_parent, make_engine, make_session_factory
@@ -69,6 +70,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.semaphore = asyncio.Semaphore(settings.max_concurrency)
     #: 进程内 SSE 事件总线：session_id -> SessionEventBus（生成结束后即移除）
     app.state.live: dict[int, object] = {}
+    #: 应用层速率限制：POST/PUT/DELETE 按 IP 滑动窗口（默认 10 次/分钟）
+    app.add_middleware(
+        RateLimitMiddleware,
+        limit=settings.rate_limit_per_minute,
+        trust_proxy=settings.trust_proxy_headers,
+    )
     app.include_router(meta_router)
     app.include_router(sessions_router)
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -86,6 +93,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "app_mode": settings.app_mode,
                 "max_input_chars": settings.max_input_chars,
                 "rate_limit_per_minute": settings.rate_limit_per_minute,
+            },
+        )
+
+    @app.get("/history", response_class=HTMLResponse, include_in_schema=False)
+    def history(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(
+            request,
+            "history.html",
+            {
+                "demo": settings.demo,
+                "app_mode": settings.app_mode,
             },
         )
 

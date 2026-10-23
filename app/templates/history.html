@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}我的学习历史 · AI 开发入门向导{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>我的学习历史</h1>
+  <p class="lead">
+    这里记录的是<strong>当前浏览器</strong>（匿名 client_id）生成过的学习路径。
+    点击任意卡片可查看该会话的摘要，也可以随时把完整计划下载为 Markdown。
+  </p>
+</section>
+
+<section class="card">
+  <div class="actions" style="justify-content: space-between;">
+    <h2 style="margin: 0;">历史会话</h2>
+    <button type="button" class="btn" id="history-refresh">🔄 刷新</button>
+  </div>
+  <p id="history-empty" class="muted" hidden>
+    还没有生成过学习路径，去<a href="/">首页</a>生成一个吧。
+  </p>
+  <div id="history-list" class="history-list"></div>
+</section>
+
+<section class="card" id="history-detail" hidden>
+  <h2>会话详情</h2>
+  <div id="detail-root"></div>
+</section>
+{% endblock %}

@@ -276,3 +276,84 @@ def test_live_mode_key_never_leaks(
         denied = _post_session(live_client, headers={})
         assert denied.status_code == 400
         assert denied.json()["error"]["code"] == "missing_key"
+
+
+# ── M3：匿名历史列表 + Markdown 导出 ─────────────────────
+
+
+def _post_session_for(client: TestClient, client_id: str) -> int:
+    resp = _post_session(client, client_id=client_id)
+    assert resp.status_code == 200
+    return resp.json()["session_id"]
+
+
+def test_list_sessions_requires_client_id(client: TestClient) -> None:
+    resp = client.get("/api/sessions")
+    assert resp.status_code == 400
+    body = resp.json()["error"]
+    assert body["code"] == "missing_client_id"
+
+
+def test_list_sessions_returns_own_sessions(client: TestClient) -> None:
+    """按 client_id 返回该匿名用户的历史会话（新→旧）。"""
+    first_id = _post_session_for(client, "api-test")
+    second_id = _post_session_for(client, "api-test")
+    _wait_ready(client, first_id)
+    _wait_ready(client, second_id)
+
+    resp = client.get("/api/sessions?client_id=api-test&limit=50")
+    assert resp.status_code == 200
+    sessions = resp.json()["sessions"]
+    assert len(sessions) >= 2
+    # 新→旧排序：后创建的 second_id 排前面
+    assert [s["id"] for s in sessions[:2]] == [second_id, first_id]
+    item = sessions[0]
+    assert set(item) == {
+        "id", "goal", "level", "status", "daily_minutes", "created_at", "stats"
+    }
+    assert set(item["stats"]) == {
+        "plan_count", "lesson_count", "term_count", "quiz_count"
+    }
+    assert item["status"] == "ready"
+    assert item["goal"] == GOAL
+
+
+def test_list_sessions_is_isolated_per_client(client: TestClient) -> None:
+    """不同匿名 client_id 之间的会话互相隔离。"""
+    _post_session_for(client, "api-test")
+    other_id = _post_session_for(client, "other-user")
+    _wait_ready(client, other_id)
+
+    resp = client.get("/api/sessions?client_id=api-test&limit=50")
+    sessions = resp.json()["sessions"]
+    assert sessions
+    assert all(s["id"] != other_id for s in sessions)
+
+
+def test_list_sessions_rejects_bad_limit(client: TestClient) -> None:
+    resp = client.get("/api/sessions?client_id=api-test&limit=500")
+    assert resp.status_code == 422
+    body = resp.json()["error"]
+    assert body["code"] == "invalid_request"
+
+
+def test_export_markdown_returns_plan_file(client: TestClient) -> None:
+    """demo 全流程生成后导出 Markdown：内容完整且带策展链接。"""
+    created = _post_session_for(client, "api-test")
+    _wait_ready(client, created)
+
+    resp = client.get(f"/api/sessions/{created}/export.md")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith("text/markdown")
+    assert f'plan-{created}.md' in resp.headers["content-disposition"]
+    body = resp.text
+    assert "学习路径" in body
+    assert "第 1 天" in body
+    assert "延伸阅读" in body
+    assert "https://github.com" in body
+
+
+def test_export_markdown_404_for_missing_session(client: TestClient) -> None:
+    resp = client.get("/api/sessions/999999/export.md")
+    assert resp.status_code == 404
+    assert resp.json()["error"]["code"] == "not_found"
