@@ -13,10 +13,12 @@ from .schemas import (
     ChatMessage,
     DiagnosisResult,
     ExplainResult,
+    GradeResult,
     PlanDay,
     PlanResult,
     QuizItemOut,
     QuizResult,
+    ReviewResult,
     TermCard,
 )
 
@@ -34,9 +36,11 @@ __all__ = [
     "ChatMessage",
     "DiagnosisResult",
     "ExplainResult",
+    "GradeResult",
     "PlanDay",
     "PlanResult",
     "QuizItemOut",
     "QuizResult",
+    "ReviewResult",
     "TermCard",
 ]

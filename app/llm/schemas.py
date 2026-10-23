@@ -97,3 +97,18 @@ class QuizResult(BaseModel):
     """出题步骤的输出：当天练习题列表。"""
 
     quizzes: list[QuizItemOut] = Field(default_factory=list)
+
+
+class GradeResult(BaseModel):
+    """评估步骤的输出：判分结论 + 评语 + 改进建议。"""
+
+    score: str = Field(default="", description="判分结论（中文）")
+    comment: str = Field(default="", description="评语")
+    suggestion: str = Field(default="", description="改进建议")
+
+
+class ReviewResult(BaseModel):
+    """复核步骤的输出：结论 + 意见。"""
+
+    verdict: str = Field(default="", description="复核结论（中文）")
+    comment: str = Field(default="", description="复核意见")

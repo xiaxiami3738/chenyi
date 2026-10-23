@@ -15,4 +15,4 @@ test-results/
 playwright-report/
 .playwright/
 *.png
-!docs/screenshots/*.png
+!docs/screenshots/*.png.pytest-out.txt

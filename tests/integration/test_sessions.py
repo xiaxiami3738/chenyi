@@ -113,7 +113,10 @@ def test_sse_replays_error_for_failed_session(client: TestClient) -> None:
         db.flush()
         db.add(
             AgentRun(
-                session_id=row.id, step="plan", status="failed", error_code="bad_format"
+                session_id=row.id,
+                step="plan",
+                status="failed",
+                error_code="invalid_output",
             )
         )
         db.commit()
@@ -122,7 +125,7 @@ def test_sse_replays_error_for_failed_session(client: TestClient) -> None:
         events = _sse_events(response)
     assert len(events) == 1
     assert events[0][0] == "error"
-    assert events[0][1]["code"] == "bad_format"
+    assert events[0][1]["code"] == "invalid_output"
 
 
 def test_sessions_404(client: TestClient) -> None:

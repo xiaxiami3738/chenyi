@@ -209,10 +209,13 @@ def test_strip_urls_cleans_all_fields(client: TestClient) -> None:
 
 
 def test_bad_llm_json_fails_session(client: TestClient) -> None:
-    """LLM 输出坏 JSON：AgentRun 记 failed + error_code，会话 failed，事件 error。"""
+    """LLM 持续输出坏 JSON：重试 1 次后 AgentRun 记 failed + error_code，会话 failed。"""
 
     class BadJSONLLM:
+        calls = 0
+
         async def chat(self, messages, *, json_mode=False, max_tokens=None) -> str:
+            BadJSONLLM.calls += 1
             return "这不是 JSON"
 
     factory = client.app.state.session_factory
@@ -228,17 +231,18 @@ def test_bad_llm_json_fails_session(client: TestClient) -> None:
                 publish=collector,
             )
         )
-    assert exc_info.value.error_code == "bad_format"
+    assert exc_info.value.error_code == "invalid_output"
+    assert BadJSONLLM.calls == 2  # 首调失败后重试 1 次
 
     assert collector.events[-1][0] == "error"
-    assert collector.events[-1][1]["code"] == "bad_format"
+    assert collector.events[-1][1]["code"] == "invalid_output"
 
     for db in session_scope(factory):
         row = db.get(LearnSession, session_id)
         assert row.status == "failed"
         failed = [r for r in row.runs if r.status == "failed"]
         assert len(failed) == 1
-        assert failed[0].error_code == "bad_format"
+        assert failed[0].error_code == "invalid_output"
 
 
 def test_summary_schema_over_db(client: TestClient) -> None:
