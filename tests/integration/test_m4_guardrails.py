@@ -178,3 +178,17 @@ class TestGuardrailsE2E:
         assert resp.status_code == 400, resp.text
         text = resp.text
         assert key not in text, "错误响应泄漏了 LLM Key"
+
+    def test_success_response_never_echoes_key(self, client: TestClient) -> None:
+        """脱敏：demo 成功链路（创建响应 + 完整摘要）同样不允许回显 Key。"""
+        key = "sk-TEST123456"
+        created = client.post(
+            "/api/sessions",
+            json=_create_payload(),
+            headers={"X-LLM-Key": key},
+        )
+        assert created.status_code == 200, created.text
+        assert key not in created.text
+        detail = client.get(f"/api/sessions/{created.json()['session_id']}")
+        assert detail.status_code == 200
+        assert key not in detail.text

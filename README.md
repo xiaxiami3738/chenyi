@@ -140,10 +140,23 @@ deploy/        Dockerfile / compose / nginx / 部署脚本
 - [x] M0 骨架：配置、数据模型、健康检查、Demo 开关、策展链接接口、CI
 - [x] M1 模型抽象层 + FakeLLM + SSE 流水线（编排：diagnose→plan→逐天 explain/quiz→finalize，AgentRun 持久化，策展链接模糊匹配挂接）
 - [x] M2 六个 Agent 拆分为独立积木角色 + 结果校验重试（app/agents/ 六角色，validator 校验失败重试 1 次，error_code=invalid_output 中止会话）
-- [ ] M3 前端两页 + 匿名历史 + Markdown 导出
-- [ ] M4 集成 / E2E 全覆盖（限流、脱敏、防幻觉断言）
-- [ ] M5 GitHub Actions 自动部署
-- [ ] M6 README / 架构图 / 演示截图 / 策展数据扩充到 40–60 条
+- [x] M3 前端两页 + 匿名历史 + Markdown 导出（首页生成 / history 页历史列表 + 一键下载）
+- [x] M4 集成 / E2E 全覆盖（限流、脱敏、防幻觉断言）
+- [x] M5 GitHub Actions 自动部署（push main 即 SSH 部署到 ECS）
+- [x] M6 README / 架构图 / 演示截图 / 策展数据扩充（51 条链接 + 22 条术语）
+
+## 演示截图
+
+> Demo 模式，无任何 LLM Key，公网实机截图。
+
+| 首页（生成学习路径） | 我的历史页（匿名会话 + 导出） |
+| --- | --- |
+| ![首页](docs/screenshots/index-demo.png) | ![历史页](docs/screenshots/history-demo.png) |
+
+## 在线演示
+
+- 公网地址：`http://118.178.182.215/`（Demo 模式，无需 Key）
+- 部署方式：GitHub Actions push 自动部署（Docker Compose：FastAPI + Nginx，`deploy/deploy.sh`）
 
 ## 贡献
 
