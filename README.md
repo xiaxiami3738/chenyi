@@ -138,8 +138,8 @@ deploy/        Dockerfile / compose / nginx / 部署脚本
 ## 路线图
 
 - [x] M0 骨架：配置、数据模型、健康检查、Demo 开关、策展链接接口、CI
-- [ ] M1 模型抽象层 + FakeLLM + SSE 流水线
-- [ ] M2 六个 Agent 全链路 + 持久化
+- [x] M1 模型抽象层 + FakeLLM + SSE 流水线（编排：diagnose→plan→逐天 explain/quiz→finalize，AgentRun 持久化，策展链接模糊匹配挂接）
+- [ ] M2 六个 Agent 拆分为独立积木角色 + 结果校验重试
 - [ ] M3 前端两页 + 匿名历史 + Markdown 导出
 - [ ] M4 集成 / E2E 全覆盖（限流、脱敏、防幻觉断言）
 - [ ] M5 GitHub Actions 自动部署
