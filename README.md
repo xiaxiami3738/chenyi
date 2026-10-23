@@ -139,7 +139,7 @@ deploy/        Dockerfile / compose / nginx / 部署脚本
 
 - [x] M0 骨架：配置、数据模型、健康检查、Demo 开关、策展链接接口、CI
 - [x] M1 模型抽象层 + FakeLLM + SSE 流水线（编排：diagnose→plan→逐天 explain/quiz→finalize，AgentRun 持久化，策展链接模糊匹配挂接）
-- [ ] M2 六个 Agent 拆分为独立积木角色 + 结果校验重试
+- [x] M2 六个 Agent 拆分为独立积木角色 + 结果校验重试（app/agents/ 六角色，validator 校验失败重试 1 次，error_code=invalid_output 中止会话）
 - [ ] M3 前端两页 + 匿名历史 + Markdown 导出
 - [ ] M4 集成 / E2E 全覆盖（限流、脱敏、防幻觉断言）
 - [ ] M5 GitHub Actions 自动部署
