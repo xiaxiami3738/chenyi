@@ -1,254 +1,565 @@
 {
-  "version": 1,
-  "note": "人工策展清单。模型不得生成 URL，只能按 topic 从这里取；新增条目必须同时写清 why。",
-  "links": [
-    {
-      "topic": "大模型基础",
-      "title": "karpathy/nanoGPT",
-      "url": "https://github.com/karpathy/nanoGPT",
-      "why": "几百行代码把 GPT 的训练与推理主业写清楚，想知道“模型到底在算什么”就从这里读。",
-      "tags": ["transformer", "从零实现"],
-      "stars": 48000
-    },
-    {
-      "topic": "大模型基础",
-      "title": "rasbt/LLMs-from-scratch",
-      "url": "https://github.com/rasbt/LLMs-from-scratch",
-      "why": "配套《Build a Large Language Model (From Scratch)》，一章一个可运行 notebook。",
-      "tags": ["教程", "从零实现"],
-      "stars": 30000
-    },
-    {
-      "topic": "大模型基础",
-      "title": "huggingface/transformers",
-      "url": "https://github.com/huggingface/transformers",
-      "why": "工业界事实标准库，看别人的模型加载、推理封装怎么写。",
-      "tags": ["库", "推理"],
-      "stars": 130000
-    },
-    {
-      "topic": "大模型基础",
-      "title": "karpathy/minbpe",
-      "url": "https://github.com/karpathy/minbpe",
-      "why": "最小 BPE 分词器实现，搞懂 token 是怎么切出来的。",
-      "tags": ["tokenizer"],
-      "stars": 4000
-    },
-    {
-      "topic": "提示工程",
-      "title": "dair-ai/Prompt-Engineering-Guide",
-      "url": "https://github.com/dair-ai/Prompt-Engineering-Guide",
-      "why": "提示工程最系统的公开资料，术语表和技巧都有出处。",
-      "tags": ["prompt", "指南"],
-      "stars": 50000
-    },
-    {
-      "topic": "提示工程",
-      "title": "f/awesome-chatgpt-prompts",
-      "url": "https://github.com/f/awesome-chatgpt-prompts",
-      "why": "大量真实 prompt 模板，适合先抄再改。",
-      "tags": ["prompt", "模板"],
-      "stars": 110000
-    },
-    {
-      "topic": "提示工程",
-      "title": "microsoft/promptflow",
-      "url": "https://github.com/microsoft/promptflow",
-      "why": "把 prompt 当工程资产管理：评测、对比、回归测试，看微软怎么做。",
-      "tags": ["prompt", "工程化"],
-      "stars": 9000
-    },
-    {
-      "topic": "RAG 检索增强",
-      "title": "langchain-ai/langchain",
-      "url": "https://github.com/langchain-ai/langchain",
-      "why": "RAG 组件最全的框架，读它的源码能快速建立“链路拼装”直觉。",
-      "tags": ["rag", "框架"],
-      "stars": 90000
-    },
-    {
-      "topic": "RAG 检索增强",
-      "title": "run-llama/llama_index",
-      "url": "https://github.com/run-llama/llama_index",
-      "why": "以数据为中心设计 RAG：索引、检索、后处理的分层很清晰。",
-      "tags": ["rag", "索引"],
-      "stars": 35000
-    },
-    {
-      "topic": "RAG 检索增强",
-      "title": "infiniflow/ragflow",
-      "url": "https://github.com/infiniflow/ragflow",
-      "why": "可运行的产品级 RAG 引擎，适合对照自己搭的版本缺了什么。",
-      "tags": ["rag", "产品"],
-      "stars": 25000
-    },
-    {
-      "topic": "RAG 检索增强",
-      "title": "chatchat-space/Langchain-Chatchat",
-      "url": "https://github.com/chatchat-space/Langchain-Chatchat",
-      "why": "中文场景的本地知识库问答，文档解析与中文分块经验值高。",
-      "tags": ["rag", "中文"],
-      "stars": 32000
-    },
-    {
-      "topic": "Agent 智能体",
-      "title": "microsoft/autogen",
-      "url": "https://github.com/microsoft/autogen",
-      "why": "多智能体对话式编排的代表实现，看“谁跟谁说话”如何被抽象。",
-      "tags": ["agent", "多智能体"],
-      "stars": 45000
-    },
-    {
-      "topic": "Agent 智能体",
-      "title": "langchain-ai/langgraph",
-      "url": "https://github.com/langchain-ai/langgraph",
-      "why": "把 Agent 流程写成状态图，适合需要分支、重试、人工介入的场景。",
-      "tags": ["agent", "编排"],
-      "stars": 10000
-    },
-    {
-      "topic": "Agent 智能体",
-      "title": "geekan/MetaGPT",
-      "url": "https://github.com/geekan/MetaGPT",
-      "why": "中文社区流行的多角色协作框架，“软件公司”式分工值得借鉴。",
-      "tags": ["agent", "中文"],
-      "stars": 45000
-    },
-    {
-      "topic": "Agent 智能体",
-      "title": "Significant-Gravitas/AutoGPT",
-      "url": "https://github.com/Significant-Gravitas/AutoGPT",
-      "why": "最早出圈的自主 Agent 项目，看它的工具循环与失败兜底。",
-      "tags": ["agent"],
-      "stars": 165000
-    },
-    {
-      "topic": "向量与检索",
-      "title": "facebookresearch/faiss",
-      "url": "https://github.com/facebookresearch/faiss",
-      "why": "向量检索的底层事实标准，理解索引类型与召回/性能取舍。",
-      "tags": ["向量", "检索"],
-      "stars": 32000
-    },
-    {
-      "topic": "向量与检索",
-      "title": "qdrant/qdrant",
-      "url": "https://github.com/qdrant/qdrant",
-      "why": "独立向量数据库，Docker 起一个就能学过滤 + 近邻搜索。",
-      "tags": ["向量数据库"],
-      "stars": 22000
-    },
-    {
-      "topic": "向量与检索",
-      "title": "chroma-core/chroma",
-      "url": "https://github.com/chroma-core/chroma",
-      "why": "最轻量的向量库，适合原型阶段先跑通再谈规模。",
-      "tags": ["向量数据库", "原型"],
-      "stars": 18000
-    },
-    {
-      "topic": "模型微调",
-      "title": "hiyouga/LLaMA-Factory",
-      "url": "https://github.com/hiyouga/LLaMA-Factory",
-      "why": "中文友好的一站式微调工具，LoRA/全参/量化训练都有现成命令。",
-      "tags": ["微调", "LoRA", "中文"],
-      "stars": 40000
-    },
-    {
-      "topic": "模型微调",
-      "title": "huggingface/peft",
-      "url": "https://github.com/huggingface/peft",
-      "why": "参数高效微调的官方实现，理解 LoRA 到底改了哪些层。",
-      "tags": ["微调", "LoRA"],
-      "stars": 17000
-    },
-    {
-      "topic": "模型微调",
-      "title": "unslothai/unsloth",
-      "url": "https://github.com/unslothai/unsloth",
-      "why": "单卡也能微调的加速方案，看工程优化如何省显存。",
-      "tags": ["微调", "性能"],
-      "stars": 25000
-    },
-    {
-      "topic": "推理与部署",
-      "title": "vllm-project/vllm",
-      "url": "https://github.com/vllm-project/vllm",
-      "why": "高吞吐推理服务的主流选择，PagedAttention 与批处理值得读。",
-      "tags": ["推理", "部署"],
-      "stars": 40000
-    },
-    {
-      "topic": "推理与部署",
-      "title": "ggerganov/llama.cpp",
-      "url": "https://github.com/ggerganov/llama.cpp",
-      "why": "本地跑模型的工程标杆，理解量化格式与 CPU 推理。",
-      "tags": ["推理", "量化"],
-      "stars": 70000
-    },
-    {
-      "topic": "推理与部署",
-      "title": "ollama/ollama",
-      "url": "https://github.com/ollama/ollama",
-      "why": "一行命令把模型跑起来，适合作为本地开发后端。",
-      "tags": ["推理", "本地"],
-      "stars": 100000
-    },
-    {
-      "topic": "应用与产品",
-      "title": "open-webui/open-webui",
-      "url": "https://github.com/open-webui/open-webui",
-      "why": "自托管的聊天前端，看一个成熟 AI 产品的交互细节。",
-      "tags": ["产品", "前端"],
-      "stars": 60000
-    },
-    {
-      "topic": "应用与产品",
-      "title": "langgenius/dify",
-      "url": "https://github.com/langgenius/dify",
-      "why": "把 LLM 应用做成可视化编排平台，工作流抽象值得抄作业。",
-      "tags": ["产品", "工作流"],
-      "stars": 60000
-    },
-    {
-      "topic": "应用与产品",
-      "title": "vercel/ai",
-      "url": "https://github.com/vercel/ai",
-      "why": "前端接模型流式输出的标准解法，SSE 与工具调用封装得很干净。",
-      "tags": ["前端", "流式"],
-      "stars": 12000
-    },
-    {
-      "topic": "学习路线",
-      "title": "microsoft/AI-For-Beginners",
-      "url": "https://github.com/microsoft/AI-For-Beginners",
-      "why": "12 周 AI 入门课程，适合零基础建立全貌。",
-      "tags": ["入门", "课程"],
-      "stars": 38000
-    },
-    {
-      "topic": "学习路线",
-      "title": "mlabonne/llm-course",
-      "url": "https://github.com/mlabonne/llm-course",
-      "why": "LLM 工程师学习路线图，带 Colab 练习。",
-      "tags": ["路线", "课程"],
-      "stars": 40000
-    },
-    {
-      "topic": "中文资源",
-      "title": "datawhalechina/llm-universe",
-      "url": "https://github.com/datawhalechina/llm-universe",
-      "why": "《动手学大模型应用开发》，中文、可直接照着做出一个知识库应用。",
-      "tags": ["中文", "实战"],
-      "stars": 8000
-    },
-    {
-      "topic": "中文资源",
-      "title": "datawhalechina/hugging-llm",
-      "url": "https://github.com/datawhalechina/hugging-llm",
-      "why": "中文 LLM 教程，术语翻译与解释对新手友好。",
-      "tags": ["中文", "教程"],
-      "stars": 5000
-    }
-  ]
+ "version": 2,
+ "note": "人工策展清单。模型不得生成 URL，只能按 topic 从这里取；新增条目必须同时写清 why。",
+ "links": [
+  {
+   "topic": "大模型基础",
+   "title": "karpathy/nanoGPT",
+   "url": "https://github.com/karpathy/nanoGPT",
+   "why": "几百行代码把 GPT 的训练与推理主业写清楚，想知道“模型到底在算什么”就从这里读。",
+   "tags": [
+    "transformer",
+    "从零实现"
+   ],
+   "stars": 48000
+  },
+  {
+   "topic": "大模型基础",
+   "title": "rasbt/LLMs-from-scratch",
+   "url": "https://github.com/rasbt/LLMs-from-scratch",
+   "why": "配套《Build a Large Language Model (From Scratch)》，一章一个可运行 notebook。",
+   "tags": [
+    "教程",
+    "从零实现"
+   ],
+   "stars": 30000
+  },
+  {
+   "topic": "大模型基础",
+   "title": "huggingface/transformers",
+   "url": "https://github.com/huggingface/transformers",
+   "why": "工业界事实标准库，看别人的模型加载、推理封装怎么写。",
+   "tags": [
+    "库",
+    "推理"
+   ],
+   "stars": 130000
+  },
+  {
+   "topic": "大模型基础",
+   "title": "karpathy/minbpe",
+   "url": "https://github.com/karpathy/minbpe",
+   "why": "最小 BPE 分词器实现，搞懂 token 是怎么切出来的。",
+   "tags": [
+    "tokenizer"
+   ],
+   "stars": 4000
+  },
+  {
+   "topic": "提示工程",
+   "title": "dair-ai/Prompt-Engineering-Guide",
+   "url": "https://github.com/dair-ai/Prompt-Engineering-Guide",
+   "why": "提示工程最系统的公开资料，术语表和技巧都有出处。",
+   "tags": [
+    "prompt",
+    "指南"
+   ],
+   "stars": 50000
+  },
+  {
+   "topic": "提示工程",
+   "title": "f/awesome-chatgpt-prompts",
+   "url": "https://github.com/f/awesome-chatgpt-prompts",
+   "why": "大量真实 prompt 模板，适合先抄再改。",
+   "tags": [
+    "prompt",
+    "模板"
+   ],
+   "stars": 110000
+  },
+  {
+   "topic": "提示工程",
+   "title": "microsoft/promptflow",
+   "url": "https://github.com/microsoft/promptflow",
+   "why": "把 prompt 当工程资产管理：评测、对比、回归测试，看微软怎么做。",
+   "tags": [
+    "prompt",
+    "工程化"
+   ],
+   "stars": 9000
+  },
+  {
+   "topic": "RAG 检索增强",
+   "title": "langchain-ai/langchain",
+   "url": "https://github.com/langchain-ai/langchain",
+   "why": "RAG 组件最全的框架，读它的源码能快速建立“链路拼装”直觉。",
+   "tags": [
+    "rag",
+    "框架"
+   ],
+   "stars": 90000
+  },
+  {
+   "topic": "RAG 检索增强",
+   "title": "run-llama/llama_index",
+   "url": "https://github.com/run-llama/llama_index",
+   "why": "以数据为中心设计 RAG：索引、检索、后处理的分层很清晰。",
+   "tags": [
+    "rag",
+    "索引"
+   ],
+   "stars": 35000
+  },
+  {
+   "topic": "RAG 检索增强",
+   "title": "infiniflow/ragflow",
+   "url": "https://github.com/infiniflow/ragflow",
+   "why": "可运行的产品级 RAG 引擎，适合对照自己搭的版本缺了什么。",
+   "tags": [
+    "rag",
+    "产品"
+   ],
+   "stars": 25000
+  },
+  {
+   "topic": "RAG 检索增强",
+   "title": "chatchat-space/Langchain-Chatchat",
+   "url": "https://github.com/chatchat-space/Langchain-Chatchat",
+   "why": "中文场景的本地知识库问答，文档解析与中文分块经验值高。",
+   "tags": [
+    "rag",
+    "中文"
+   ],
+   "stars": 32000
+  },
+  {
+   "topic": "Agent 智能体",
+   "title": "microsoft/autogen",
+   "url": "https://github.com/microsoft/autogen",
+   "why": "多智能体对话式编排的代表实现，看“谁跟谁说话”如何被抽象。",
+   "tags": [
+    "agent",
+    "多智能体"
+   ],
+   "stars": 45000
+  },
+  {
+   "topic": "Agent 智能体",
+   "title": "langchain-ai/langgraph",
+   "url": "https://github.com/langchain-ai/langgraph",
+   "why": "把 Agent 流程写成状态图，适合需要分支、重试、人工介入的场景。",
+   "tags": [
+    "agent",
+    "编排"
+   ],
+   "stars": 10000
+  },
+  {
+   "topic": "Agent 智能体",
+   "title": "geekan/MetaGPT",
+   "url": "https://github.com/geekan/MetaGPT",
+   "why": "中文社区流行的多角色协作框架，“软件公司”式分工值得借鉴。",
+   "tags": [
+    "agent",
+    "中文"
+   ],
+   "stars": 45000
+  },
+  {
+   "topic": "Agent 智能体",
+   "title": "Significant-Gravitas/AutoGPT",
+   "url": "https://github.com/Significant-Gravitas/AutoGPT",
+   "why": "最早出圈的自主 Agent 项目，看它的工具循环与失败兜底。",
+   "tags": [
+    "agent"
+   ],
+   "stars": 165000
+  },
+  {
+   "topic": "向量与检索",
+   "title": "facebookresearch/faiss",
+   "url": "https://github.com/facebookresearch/faiss",
+   "why": "向量检索的底层事实标准，理解索引类型与召回/性能取舍。",
+   "tags": [
+    "向量",
+    "检索"
+   ],
+   "stars": 32000
+  },
+  {
+   "topic": "向量与检索",
+   "title": "qdrant/qdrant",
+   "url": "https://github.com/qdrant/qdrant",
+   "why": "独立向量数据库，Docker 起一个就能学过滤 + 近邻搜索。",
+   "tags": [
+    "向量数据库"
+   ],
+   "stars": 22000
+  },
+  {
+   "topic": "向量与检索",
+   "title": "chroma-core/chroma",
+   "url": "https://github.com/chroma-core/chroma",
+   "why": "最轻量的向量库，适合原型阶段先跑通再谈规模。",
+   "tags": [
+    "向量数据库",
+    "原型"
+   ],
+   "stars": 18000
+  },
+  {
+   "topic": "模型微调",
+   "title": "hiyouga/LLaMA-Factory",
+   "url": "https://github.com/hiyouga/LLaMA-Factory",
+   "why": "中文友好的一站式微调工具，LoRA/全参/量化训练都有现成命令。",
+   "tags": [
+    "微调",
+    "LoRA",
+    "中文"
+   ],
+   "stars": 40000
+  },
+  {
+   "topic": "模型微调",
+   "title": "huggingface/peft",
+   "url": "https://github.com/huggingface/peft",
+   "why": "参数高效微调的官方实现，理解 LoRA 到底改了哪些层。",
+   "tags": [
+    "微调",
+    "LoRA"
+   ],
+   "stars": 17000
+  },
+  {
+   "topic": "模型微调",
+   "title": "unslothai/unsloth",
+   "url": "https://github.com/unslothai/unsloth",
+   "why": "单卡也能微调的加速方案，看工程优化如何省显存。",
+   "tags": [
+    "微调",
+    "性能"
+   ],
+   "stars": 25000
+  },
+  {
+   "topic": "推理与部署",
+   "title": "vllm-project/vllm",
+   "url": "https://github.com/vllm-project/vllm",
+   "why": "高吞吐推理服务的主流选择，PagedAttention 与批处理值得读。",
+   "tags": [
+    "推理",
+    "部署"
+   ],
+   "stars": 40000
+  },
+  {
+   "topic": "推理与部署",
+   "title": "ggerganov/llama.cpp",
+   "url": "https://github.com/ggerganov/llama.cpp",
+   "why": "本地跑模型的工程标杆，理解量化格式与 CPU 推理。",
+   "tags": [
+    "推理",
+    "量化"
+   ],
+   "stars": 70000
+  },
+  {
+   "topic": "推理与部署",
+   "title": "ollama/ollama",
+   "url": "https://github.com/ollama/ollama",
+   "why": "一行命令把模型跑起来，适合作为本地开发后端。",
+   "tags": [
+    "推理",
+    "本地"
+   ],
+   "stars": 100000
+  },
+  {
+   "topic": "应用与产品",
+   "title": "open-webui/open-webui",
+   "url": "https://github.com/open-webui/open-webui",
+   "why": "自托管的聊天前端，看一个成熟 AI 产品的交互细节。",
+   "tags": [
+    "产品",
+    "前端"
+   ],
+   "stars": 60000
+  },
+  {
+   "topic": "应用与产品",
+   "title": "langgenius/dify",
+   "url": "https://github.com/langgenius/dify",
+   "why": "把 LLM 应用做成可视化编排平台，工作流抽象值得抄作业。",
+   "tags": [
+    "产品",
+    "工作流"
+   ],
+   "stars": 60000
+  },
+  {
+   "topic": "应用与产品",
+   "title": "vercel/ai",
+   "url": "https://github.com/vercel/ai",
+   "why": "前端接模型流式输出的标准解法，SSE 与工具调用封装得很干净。",
+   "tags": [
+    "前端",
+    "流式"
+   ],
+   "stars": 12000
+  },
+  {
+   "topic": "学习路线",
+   "title": "microsoft/AI-For-Beginners",
+   "url": "https://github.com/microsoft/AI-For-Beginners",
+   "why": "12 周 AI 入门课程，适合零基础建立全貌。",
+   "tags": [
+    "入门",
+    "课程"
+   ],
+   "stars": 38000
+  },
+  {
+   "topic": "学习路线",
+   "title": "mlabonne/llm-course",
+   "url": "https://github.com/mlabonne/llm-course",
+   "why": "LLM 工程师学习路线图，带 Colab 练习。",
+   "tags": [
+    "路线",
+    "课程"
+   ],
+   "stars": 40000
+  },
+  {
+   "topic": "中文资源",
+   "title": "datawhalechina/llm-universe",
+   "url": "https://github.com/datawhalechina/llm-universe",
+   "why": "《动手学大模型应用开发》，中文、可直接照着做出一个知识库应用。",
+   "tags": [
+    "中文",
+    "实战"
+   ],
+   "stars": 8000
+  },
+  {
+   "topic": "中文资源",
+   "title": "datawhalechina/hugging-llm",
+   "url": "https://github.com/datawhalechina/hugging-llm",
+   "why": "中文 LLM 教程，术语翻译与解释对新手友好。",
+   "tags": [
+    "中文",
+    "教程"
+   ],
+   "stars": 5000
+  },
+  {
+   "topic": "大模型基础",
+   "title": "karpathy/llm.c",
+   "url": "https://github.com/karpathy/llm.c",
+   "why": "纯 C 语言实现 GPT-2 推理与训练，读完 nanoGPT 后用这份代码看“去掉框架后模型还剩什么”。",
+   "tags": [
+    "从零实现",
+    "c"
+   ],
+   "stars": 30000
+  },
+  {
+   "topic": "大模型基础",
+   "title": "openai/gpt-2",
+   "url": "https://github.com/openai/gpt-2",
+   "why": "最早大规模开源的 GPT，代码量小，适合理解“生成式预训练”的原点与局限。",
+   "tags": [
+    "gpt",
+    "开源模型"
+   ],
+   "stars": 21000
+  },
+  {
+   "topic": "提示工程",
+   "title": "openai/openai-cookbook",
+   "url": "https://github.com/openai/openai-cookbook",
+   "why": "OpenAI 官方示例集：结构化输出、函数调用、嵌入检索等新手必做的常见场景都有现成代码。",
+   "tags": [
+    "官方",
+    "示例"
+   ],
+   "stars": 62000
+  },
+  {
+   "topic": "提示工程",
+   "title": "brexhq/prompt-engineering",
+   "url": "https://github.com/brexhq/prompt-engineering",
+   "why": "用可复现的实验讲提示工程（少样本、思维链、格式约束），读完能动手做 A/B 对比。",
+   "tags": [
+    "实验",
+    "技巧"
+   ],
+   "stars": 9000
+  },
+  {
+   "topic": "RAG 检索增强",
+   "title": "explodinggradients/ragas",
+   "url": "https://github.com/explodinggradients/ragas",
+   "why": "RAG 效果评估框架：忠实度、答案相关性等指标，学了 RAG 后要学会“怎么证明它有效”。",
+   "tags": [
+    "评估",
+    "指标"
+   ],
+   "stars": 9000
+  },
+  {
+   "topic": "RAG 检索增强",
+   "title": "microsoft/graphrag",
+   "url": "https://github.com/microsoft/graphrag",
+   "why": "微软开源的 GraphRAG，把知识图谱融入检索，适合了解 RAG 的进阶形态。",
+   "tags": [
+    "graphrag",
+    "知识图谱"
+   ],
+   "stars": 25000
+  },
+  {
+   "topic": "Agent 智能体",
+   "title": "openai/swarm",
+   "url": "https://github.com/openai/swarm",
+   "why": "OpenAI 官方轻量多 Agent 教育示例：几十行就能搭出手/交接的 Agent 组合，适合入门编排。",
+   "tags": [
+    "多智能体",
+    "轻量"
+   ],
+   "stars": 30000
+  },
+  {
+   "topic": "Agent 智能体",
+   "title": "camel-ai/camel",
+   "url": "https://github.com/camel-ai/camel",
+   "why": "多智能体协作框架，能看到“两个角色对话式协作”的经典实现，与本书编排器思路互参。",
+   "tags": [
+    "多智能体",
+    "协作"
+   ],
+   "stars": 7000
+  },
+  {
+   "topic": "向量与检索",
+   "title": "milvus-io/milvus",
+   "url": "https://github.com/milvus-io/milvus",
+   "why": "生产级向量数据库，规模化的向量检索方案参考，看完 chroma 再看它会理解“上了量之后要什么”。",
+   "tags": [
+    "向量数据库",
+    "生产"
+   ],
+   "stars": 17000
+  },
+  {
+   "topic": "向量与检索",
+   "title": "pgvector/pgvector",
+   "url": "https://github.com/pgvector/pgvector",
+   "why": "PostgreSQL 的向量扩展：已有 PG 业务想加检索功能最平滑的路径，SQL 开发者的 RAG 首选。",
+   "tags": [
+    "postgres",
+    "扩展"
+   ],
+   "stars": 14000
+  },
+  {
+   "topic": "模型微调",
+   "title": "huggingface/trl",
+   "url": "https://github.com/huggingface/trl",
+   "why": "HuggingFace 官方对齐库：SFT/LoRA/DPO 一条命令即可，微调入门到进阶的现代标准写法。",
+   "tags": [
+    "trl",
+    "对齐"
+   ],
+   "stars": 12000
+  },
+  {
+   "topic": "模型微调",
+   "title": "databricks/dolly",
+   "url": "https://github.com/databricks/dolly",
+   "why": "Dolly 2.0 的开源复现教程：展示“用少量高质量数据做出能用的模型”的最小可行路径。",
+   "tags": [
+    "数据",
+    "教学"
+   ],
+   "stars": 4700
+  },
+  {
+   "topic": "推理与部署",
+   "title": "abetlen/llama-cpp-python",
+   "url": "https://github.com/abetlen/llama-cpp-python",
+   "why": "llama.cpp 的 Python 绑定：本地 CPU/GPU 推理的实用 API，部署本地模型的常见选择。",
+   "tags": [
+    "本地推理",
+    "llama.cpp"
+   ],
+   "stars": 5000
+  },
+  {
+   "topic": "推理与部署",
+   "title": "sgl-project/sglang",
+   "url": "https://github.com/sgl-project/sglang",
+   "why": "高吞吐推理引擎，结构化生成与并行调度，vLLM 之外了解“快还能多快”的参考实现。",
+   "tags": [
+    "推理引擎",
+    "性能"
+   ],
+   "stars": 12000
+  },
+  {
+   "topic": "应用与产品",
+   "title": "FlowiseAI/Flowise",
+   "url": "https://github.com/FlowiseAI/Flowise",
+   "why": "拖拽式 LLM 应用搭建平台，不写代码先拼出 RAG/Agent 原型，反向理解应用骨架。",
+   "tags": [
+    "低代码",
+    "可视化"
+   ],
+   "stars": 42000
+  },
+  {
+   "topic": "应用与产品",
+   "title": "langflow-ai/langflow",
+   "url": "https://github.com/langflow-ai/langflow",
+   "why": "可视化 AI 应用编排平台，与 Dify 对照看不同产品的面向与取舍。",
+   "tags": [
+    "低代码",
+    "编排"
+   ],
+   "stars": 65000
+  },
+  {
+   "topic": "学习路线",
+   "title": "microsoft/generative-ai-for-beginners",
+   "url": "https://github.com/microsoft/generative-ai-for-beginners",
+   "why": "微软官方生成式 AI 入门课，18 课配代码与视频，和本网站知识域几乎一一对应，可当课后习题。",
+   "tags": [
+    "课程",
+    "官方"
+   ],
+   "stars": 76000
+  },
+  {
+   "topic": "学习路线",
+   "title": "dair-ai/ML-Papers-of-the-Week",
+   "url": "https://github.com/dair-ai/ML-Papers-of-the-Week",
+   "why": "每周精选顶会论文与解读，帮你保持对“AI 每周在发生什么”的持续感知。",
+   "tags": [
+    "论文",
+    "周报"
+   ],
+   "stars": 12000
+  },
+  {
+   "topic": "中文资源",
+   "title": "datawhalechina/prompt-engineering-for-developers",
+   "url": "https://github.com/datawhalechina/prompt-engineering-for-developers",
+   "why": "Datawhale 的中文提示工程课程，从开发者视角讲工程化提示写法，中文示例友好。",
+   "tags": [
+    "中文",
+    "课程"
+   ],
+   "stars": 14000
+  },
+  {
+   "topic": "中文资源",
+   "title": "binary-husky/gpt_academic",
+   "url": "https://github.com/binary-husky/gpt_academic",
+   "why": "中文社区高热度项目：给学术写作优化的多模型会话工具，展示“围绕大模型的产品能长什么样”。",
+   "tags": [
+    "中文",
+    "工具"
+   ],
+   "stars": 61000
+  }
+ ]
 }
