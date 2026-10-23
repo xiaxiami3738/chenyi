@@ -45,7 +45,7 @@ from ..models.tables import (
     SessionLink,
     Term,
 )
-from .links import links_for_topic, strip_urls
+from .links import links_for_topic, strip_urls, topics_with_links
 
 logger = logging.getLogger("chenyi.pipeline")
 
@@ -409,11 +409,29 @@ async def _call_llm(llm: ChatLLM, messages: list[ChatMessage], model: type[_T]) 
 
 
 async def _finalize(db: Session, session_id: int, topics: list[str]) -> None:
-    """按天主题挂策展链接（每主题最多 2 条、跨主题去重）。"""
+    """按天主题挂策展链接（每主题最多 2 条、跨主题去重）。
+
+    主题匹配策略：先精确匹配策展主题；miss 时做子串模糊匹配
+    （任一方向包含即算命中）；仍 miss 的主题不重复补链接。
+    """
     seen: set[int] = set()
     payload: list[dict] = []
+    all_topics: list[str] = topics_with_links(db)
     for topic in topics:
-        for link in links_for_topic(db, topic, limit=2):
+        candidates: list[CuratedLink] = []
+        if topic in all_topics:
+            candidates = links_for_topic(db, topic, limit=2)
+        else:
+            # 子串模糊匹配：模型输出主题常带修饰词，如「大模型基础与工作原理」
+            for ct in all_topics:
+                if ct in topic or topic in ct:
+                    match = links_for_topic(db, ct, limit=2)
+                    if match:
+                        candidates.extend(match)
+                        break
+        if not candidates:
+            continue
+        for link in candidates:
             if link.id in seen:
                 continue
             seen.add(link.id)
