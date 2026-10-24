@@ -559,6 +559,10 @@ textarea { resize: vertical; }
 .topic-chip[data-kind="link"]::before { background: var(--ok); }
 .topic-chip.active::before { background: #fff; }
 
+.browse-topics { display: grid; gap: 12px; margin: 4px 0 16px; }
+.browse-topic-group { display: grid; gap: 7px; }
+.browse-group-label { margin: 0; font-size: 12.5px; color: var(--muted); letter-spacing: .02em; }
+
 .browse-list { display: grid; gap: 9px; margin-top: 8px; }
 .browse-chapter {
   border: 1px solid var(--line);

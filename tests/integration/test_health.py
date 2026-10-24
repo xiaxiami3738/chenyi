@@ -40,3 +40,22 @@ def test_static_assets_served(client: TestClient) -> None:
         response = client.get(path)
         assert response.status_code == 200
         assert response.content
+
+def test_index_has_local_search_mode_hint(client: TestClient) -> None:
+    """首页要说明「未接入 API 时是本地检索」，并留出接入入口。"""
+    html = client.get("/").text
+    assert 'id="kb-mode"' in html
+    assert "本地检索" in html
+    assert 'href="/connect"' in html
+    assert "hero-mascot" in html
+
+
+def test_kb_and_connect_pages_render(client: TestClient) -> None:
+    kb = client.get("/kb")
+    assert kb.status_code == 200
+    assert "知识库" in kb.text
+    assert "/static/kb-page.js" in kb.text
+
+    connect = client.get("/connect")
+    assert connect.status_code == 200
+    assert "接入" in connect.text

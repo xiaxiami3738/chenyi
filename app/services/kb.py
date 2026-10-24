@@ -337,6 +337,32 @@ class KBIndex:
             for idx, score in ranked
         ]
 
+    def terms(self, topic: str = "", limit: int = 50) -> list[dict]:
+        """按主题返回名词卡（topic 为空时返回全部）。
+
+        知识库分页的名词卡专区用：直接按主题过滤，避免「检索主题名」时名词卡
+        被章节结果挤到 limit 之外。
+        """
+        cards: list[dict] = []
+        for doc in self.docs:
+            if doc.kind != "term":
+                continue
+            if topic and doc.topic != topic:
+                continue
+            cards.append(
+                {
+                    "term": doc.title,
+                    "topic": doc.topic,
+                    "definition": doc.definition,
+                    "analogy": doc.analogy,
+                    "pitfalls": doc.pitfalls,
+                    "source": doc.source,
+                }
+            )
+            if len(cards) >= limit:
+                break
+        return cards
+
     def answer(self, query: str, limit: int = 8) -> dict:
         """本地零 Token 问答结果：把用户句子里命中的名词解释 + 一条最相关开源链接整理好。
 

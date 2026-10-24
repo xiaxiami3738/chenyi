@@ -602,8 +602,23 @@ function renderBrowse(data) {
     });
     return chip;
   };
-  data.terms_topics.forEach((t) => topics.appendChild(makeTopicChip(t, "term")));
-  data.links_topics.forEach((t) => topics.appendChild(makeTopicChip(t, "link")));
+  // 两组主题分开显示并加小标题，避免两排 chip 混在一起看起来像重复
+  const addTopicGroup = (label, items, kind) => {
+    if (!items || !items.length) return;
+    const group = document.createElement("div");
+    group.className = "browse-topic-group";
+    const caption = document.createElement("p");
+    caption.className = "browse-group-label";
+    caption.textContent = label;
+    group.appendChild(caption);
+    const bar = document.createElement("div");
+    bar.className = "topic-bar";
+    items.forEach((t) => bar.appendChild(makeTopicChip(t, kind)));
+    group.appendChild(bar);
+    topics.appendChild(group);
+  };
+  addTopicGroup("名词卡主题（点开看概念解释）", data.terms_topics, "term");
+  addTopicGroup("开源项目主题（按方向找项目）", data.links_topics, "link");
 
   // 章节目录：<details> 折叠每个章节小节
   data.chapters.forEach((ch) => {

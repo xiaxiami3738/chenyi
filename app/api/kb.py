@@ -31,6 +31,20 @@ def kb_search(
     }
 
 
+@router.get("/terms")
+def kb_terms(
+    request: Request,
+    topic: str = Query("", max_length=100, description="主题，留空表示全部"),
+    limit: int = Query(50, ge=1, le=50),
+) -> dict:
+    """按主题列出名词卡（本地数据，零 token）。"""
+    index = _index(request)
+    if index is None:
+        return {"topic": topic, "total": 0, "terms": []}
+    terms = index.terms(topic.strip(), limit=limit)
+    return {"topic": topic, "total": len(terms), "terms": terms}
+
+
 @router.get("/answer")
 def kb_answer(
     request: Request,

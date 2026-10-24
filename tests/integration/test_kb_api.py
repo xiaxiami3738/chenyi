@@ -62,3 +62,39 @@ def test_kb_routes_registered_in_healthz(client: TestClient) -> None:
     resp = client.get("/api/healthz")
     assert resp.status_code == 200
     assert "kb" in resp.json()["features"]
+
+def test_kb_answer_returns_term_link_and_chapters(kb_client: TestClient) -> None:
+    """本地零 Token 问答：名词解释 + 最相关开源项目 + 章节。"""
+    resp = kb_client.get("/api/kb/answer", params={"q": "RAG 是什么"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total"] >= 1
+    assert body["terms"], "应命中名词卡"
+    term = body["terms"][0]
+    assert term["term"]
+    assert "definition" in term
+    assert body["link"] is not None
+    assert body["link"]["url"].startswith("https://github.com/")
+    assert isinstance(body["chapters"], list)
+
+
+def test_kb_answer_empty_query_returns_empty(kb_client: TestClient) -> None:
+    resp = kb_client.get("/api/kb/answer", params={"q": "的"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["terms"] == []
+    assert body["chapters"] == []
+    assert body["link"] is None
+
+
+def test_kb_terms_by_topic(kb_client: TestClient) -> None:
+    resp = kb_client.get("/api/kb/terms", params={"topic": "RAG 检索增强"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total"] >= 1
+    assert all(item["topic"] == "RAG 检索增强" for item in body["terms"])
+    assert all(item["term"] for item in body["terms"])
+
+
+def test_kb_terms_limit_validation(kb_client: TestClient) -> None:
+    assert kb_client.get("/api/kb/terms", params={"limit": 0}).status_code == 422
