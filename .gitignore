@@ -28,3 +28,6 @@ app/static/img/*.json
 deploy/certs/
 deploy/certbot-www/
 deploy/runtime/
+
+# 交接文档含真实凭据，禁止入库
+_交接文档.md
