@@ -72,5 +72,17 @@ curl -sS -o /dev/null -w "https://${DOMAIN} -> %{http_code}\n" --resolve "${DOMA
 curl -sS -o /dev/null -w "http://${DOMAIN} -> %{http_code}（应为 301）\n" --resolve "${DOMAIN}:80:127.0.0.1" "http://${DOMAIN}/" || true
 
 echo
-echo "==> 完成。后续 renewal 由 certbot 容器每 12 小时检查；"
-echo "    续期生效方式：docker compose exec nginx nginx -s reload"
+echo "==> 完成。后续 renewal 由 certbot 容器每 12 小时检查。"
+
+echo "==> 安装证书重载定时任务（每天 04:17 让 nginx 重新读取证书）"
+DEPLOY_DIR="$(pwd)"
+cat >/etc/cron.d/chenyi-certbot-reload <<EOF
+# chenyi: certbot 续期后让 nginx 重新加载证书
+17 4 * * * root cd ${DEPLOY_DIR} && docker compose exec -T nginx nginx -s reload >/dev/null 2>&1 || true
+EOF
+chmod 644 /etc/cron.d/chenyi-certbot-reload
+echo "    已写入 /etc/cron.d/chenyi-certbot-reload"
+
+echo
+echo "==> 后续如需手动续期：docker compose run --rm --entrypoint certbot certbot renew --webroot -w /var/www/certbot"
+echo "    续期后生效：docker compose exec nginx nginx -s reload"
