@@ -22,6 +22,14 @@ else
     docker compose up -d --build --remove-orphans
 fi
 
+# nginx.conf 是以单文件 bind mount 挂进容器的，git reset --hard 替换文件 inode 后
+# 旧容器仍指向旧 inode，不会自动加载新配置，因此每次部署都强制重建 nginx 容器。
+if [ -f ../.env ]; then
+    docker compose --env-file ../.env up -d --no-deps --force-recreate nginx
+else
+    docker compose up -d --no-deps --force-recreate nginx
+fi
+
 echo "==> 容器状态"
 docker compose ps
 
