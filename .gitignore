@@ -20,6 +20,8 @@ playwright-report/
 !docs/screenshots/*.png
 # 站点内联点缀素材（鲸鱼娘等）需要随代码一起部署（README 里的截图仍靠上面的 docs 例外）
 !app/static/img/*.png
+# 生图接口返回的元数据（含签名 URL，不随站点发布）
+app/static/img/*.json
 .pytest-out.txt
 
 # 部署运行时产物（证书、acme 校验目录、按证书选择生成的 nginx 配置）
