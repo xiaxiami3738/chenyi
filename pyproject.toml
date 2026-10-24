@@ -1,6 +1,6 @@
 [project]
 name = "chenyi"
-version = "0.1.0"
+version = "0.2.0"
 description = "AI 开发入门向导：让普通人快速接手 AI 开发"
 readme = "README.md"
 requires-python = ">=3.12"
