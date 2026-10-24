@@ -120,6 +120,31 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             },
         )
 
+    @app.get("/kb", response_class=HTMLResponse, include_in_schema=False)
+    def kb_page(request: Request) -> HTMLResponse:
+        """知识库分页：章节 / 名词卡 / 策展链接浏览与检索，全程零 Token。"""
+        return templates.TemplateResponse(
+            request,
+            "kb.html",
+            {
+                "demo": settings.demo,
+                "app_mode": settings.app_mode,
+                "max_input_chars": settings.max_input_chars,
+            },
+        )
+
+    @app.get("/connect", response_class=HTMLResponse, include_in_schema=False)
+    def connect_page(request: Request) -> HTMLResponse:
+        """模型接入页：浏览器自带 Key（BYOK）或可选的服务器加密代存。"""
+        return templates.TemplateResponse(
+            request,
+            "connect.html",
+            {
+                "demo": settings.demo,
+                "app_mode": settings.app_mode,
+            },
+        )
+
     @app.exception_handler(Exception)
     async def unhandled_exception(_request: Request, exc: Exception) -> JSONResponse:
         logger.exception("未处理异常：%s", mask_secrets(str(exc)))

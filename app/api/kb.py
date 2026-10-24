@@ -31,6 +31,25 @@ def kb_search(
     }
 
 
+@router.get("/answer")
+def kb_answer(
+    request: Request,
+    q: str = Query(..., min_length=1, max_length=200, description="用户输入的一句话"),
+    limit: int = Query(6, ge=1, le=20),
+) -> dict:
+    """本地零 Token 问答：名词解释 + 最相关开源项目 + 书中章节（全部带出处）。
+
+    首页在「未接入自己的 API」时使用该接口：把用户句子里命中的名词卡片、
+    一条最相关的 GitHub 链接、以及书中相关章节一起返回，回答不消耗任何 token。
+    """
+    index = _index(request)
+    query = q.strip()
+    empty = {"query": query, "terms": [], "chapters": [], "link": None, "total": 0}
+    if index is None or not query:
+        return empty
+    return index.answer(query, limit=limit)
+
+
 @router.get("/overview")
 def kb_overview(request: Request) -> dict:
     """首页浏览所需信息：章节目录 + 术语/链接主题。"""

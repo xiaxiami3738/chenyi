@@ -292,6 +292,131 @@ body {
 .kb-hit-url { font-size: 13px; color: var(--primary); text-decoration: none; font-weight: 600; }
 .kb-hit-url:hover { text-decoration: underline; }
 
+/* ── 本地问答（零 Token）：名词解释 / 最相关开源项目 / 相关章节 ── */
+.kb-mode {
+  max-width: 560px;
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.kb-mode strong { color: var(--text-2); }
+.kb-mode a { color: var(--primary); font-weight: 600; text-decoration: none; }
+.kb-mode a:hover { text-decoration: underline; }
+.kb-mode-tag {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--primary-soft);
+  border: 1px solid var(--primary-line);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: 1px;
+}
+.kb-answer-block { margin-top: 18px; }
+.kb-block-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+.kb-term-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.kb-term-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-1);
+}
+.kb-card-label {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.kb-card-label[data-kind="term"] { background: var(--violet-bg); border: 1px solid var(--violet-line); color: var(--violet); }
+.kb-card-label[data-kind="link"] { background: var(--ok-bg); border: 1px solid var(--ok-line); color: var(--ok); }
+.kb-term-name { display: block; font-size: 15.5px; color: var(--text); margin-bottom: 6px; }
+.kb-term-def { margin: 0 0 6px; font-size: 14px; line-height: 1.7; color: var(--text-2); }
+.kb-term-analogy,
+.kb-term-pitfall { margin: 0 0 4px; font-size: 13.5px; line-height: 1.65; }
+.kb-term-analogy { color: var(--ok); }
+.kb-term-pitfall { color: var(--danger); }
+.kb-term-card .meta { margin-top: 8px; }
+.kb-link-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-1);
+}
+.kb-link-title { display: block; font-size: 15.5px; color: var(--text); margin-bottom: 6px; }
+.kb-link-card .why { margin: 0 0 6px; font-size: 14px; line-height: 1.7; color: var(--text-2); }
+.kb-link-card .btn { margin-top: 8px; }
+.kb-chapter-list { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
+.kb-chapter-list li { padding-left: 2px; }
+.kb-chapter-title { font-size: 14.5px; color: var(--text); }
+.kb-chapter-list .kb-hit-snippet { margin: 4px 0 2px; }
+
+/* ── 首屏点缀：DSH 鲸鱼娘（装饰性，不参与读屏） ─────────────── */
+.hero { position: relative; }
+.hero-mascot {
+  position: absolute;
+  right: -18px;
+  top: 6px;
+  width: 190px;
+  height: auto;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  user-select: none;
+}
+@media (max-width: 1080px) {
+  .hero-mascot { width: 132px; right: 0; top: -6px; opacity: .92; }
+}
+@media (max-width: 680px) {
+  .hero-mascot { display: none; }
+}
+
+/* 极淡的浪花/鲸尾底纹：只做氛围，不影响文字可读性 */
+body::before {
+  content: "";
+  position: fixed;
+  right: -60px;
+  bottom: -80px;
+  width: 480px;
+  height: 480px;
+  background: url("/static/img/whale-pattern.png") repeat;
+  background-size: 240px auto;
+  opacity: .055;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* 空结果旁的小鲸鱼（点缀） */
+.kb-empty {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 6px 0 0;
+}
+.kb-empty img {
+  width: 72px;
+  height: auto;
+  flex: none;
+  mix-blend-mode: multiply;
+}
+.kb-empty p { margin: 0; }
+
 /* ── 卡片 ────────────────────────────────────────────────────── */
 .card {
   background: var(--card);

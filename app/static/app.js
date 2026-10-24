@@ -427,43 +427,104 @@ function bindForm() {
 
 let kbAbort = null; // 检索请求的 AbortController，快速连打时取消上一个
 
-const KIND_LABEL = { chapter: "章节", term: "名词卡", link: "链接" };
+const KB_HINT_DEFAULT =
+  "本地知识库即时检索 · 不消耗任何模型额度 · 结果带出处可核对";
 
-function renderKbResults(data) {
+function kbBlock(title) {
+  const block = textEl("section", "kb-answer-block", "");
+  block.appendChild(textEl("h3", "kb-block-title", title));
+  return block;
+}
+
+/**
+ * 渲染本地问答结果（零 Token）：
+ * ① 用户句子里命中的名词解释 → ② 最相关的一个开源项目 → ③ 书中相关章节。
+ */
+function renderKbAnswer(data) {
   const box = $("kb-results");
   box.hidden = false;
   box.innerHTML = "";
   if (!data.total) {
-    const empty = textEl("p", "muted", `没有找到与「${data.query}」相关的内容，换个问法试试。`);
+    const empty = textEl("div", "kb-empty", "");
+    const whale = document.createElement("img");
+    whale.src = "/static/img/whale-empty.png";
+    whale.alt = "";
+    whale.setAttribute("aria-hidden", "true");
+    empty.appendChild(whale);
+    empty.appendChild(
+      textEl(
+        "p",
+        "muted",
+        `本地知识库里暂时没有「${data.query}」的解释。换个说法试试，或点开下方章节浏览；接入自己的 API 后也可以用 AI 对话回答。`
+      )
+    );
     box.appendChild(empty);
     return;
   }
-  box.appendChild(textEl("div", "kb-result-count", `找到 ${data.total} 条相关结果（本地知识库，零 Token 消耗）：`));
-  data.results.forEach((hit) => {
-    const item = textEl("article", "kb-hit", "");
-    const head = textEl("div", "kb-hit-head", "");
-    const kind = document.createElement("span");
-    kind.className = "kb-kind";
-    kind.dataset.kind = hit.kind; // M8：按 kind 给徽章上色（chapter/term/link）
-    kind.textContent = KIND_LABEL[hit.kind] || hit.kind;
-    const title = textEl("strong", "kb-hit-title", hit.title);
-    head.appendChild(kind);
-    head.appendChild(title);
-    item.appendChild(head);
-    item.appendChild(textEl("p", "kb-hit-snippet", hit.snippet));
-    const meta = textEl("div", "meta", `出处：${hit.source}` + (hit.topic ? ` · ${hit.topic}` : ""));
-    item.appendChild(meta);
-    if (hit.url) {
-      const a = document.createElement("a");
-      a.href = hit.url;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      a.className = "kb-hit-url";
-      a.textContent = "打开项目 →";
-      item.appendChild(a);
-    }
-    box.appendChild(item);
-  });
+  box.appendChild(
+    textEl(
+      "div",
+      "kb-result-count",
+      "本地知识库直接回答（零 Token）：先看名词解释，再看一个最相关的开源项目"
+    )
+  );
+
+  if (data.terms && data.terms.length) {
+    const block = kbBlock("名词解释");
+    const grid = textEl("div", "kb-term-grid", "");
+    data.terms.forEach((item) => {
+      const card = textEl("article", "kb-term-card", "");
+      const label = textEl("span", "kb-card-label", "名词卡");
+      label.dataset.kind = "term";
+      card.appendChild(label);
+      card.appendChild(textEl("strong", "kb-term-name", item.term));
+      if (item.definition) card.appendChild(textEl("p", "kb-term-def", item.definition));
+      if (item.analogy) card.appendChild(textEl("p", "kb-term-analogy", `类比：${item.analogy}`));
+      if (item.pitfalls) card.appendChild(textEl("p", "kb-term-pitfall", `易错点：${item.pitfalls}`));
+      card.appendChild(
+        textEl("div", "meta", `出处：${item.source}` + (item.topic ? ` · ${item.topic}` : ""))
+      );
+      grid.appendChild(card);
+    });
+    block.appendChild(grid);
+    box.appendChild(block);
+  }
+
+  if (data.link) {
+    const block = kbBlock("最相关的开源项目");
+    const card = textEl("article", "kb-link-card", "");
+    const label = textEl("span", "kb-card-label", "开源项目");
+    label.dataset.kind = "link";
+    card.appendChild(label);
+    card.appendChild(textEl("strong", "kb-link-title", data.link.title));
+    if (data.link.why) card.appendChild(textEl("p", "why", data.link.why));
+    card.appendChild(textEl("div", "meta", `主题：${data.link.topic} · 人工策展`));
+    const a = document.createElement("a");
+    a.href = data.link.url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.className = "btn btn-ghost btn-small";
+    a.textContent = "打开 GitHub →";
+    card.appendChild(a);
+    block.appendChild(card);
+    box.appendChild(block);
+  }
+
+  if (data.chapters && data.chapters.length) {
+    const block = kbBlock("书中相关章节");
+    const list = textEl("ol", "kb-chapter-list", "");
+    data.chapters.forEach((hit) => {
+      const li = document.createElement("li");
+      li.appendChild(textEl("strong", "kb-chapter-title", hit.title));
+      li.appendChild(textEl("p", "kb-hit-snippet", hit.snippet));
+      li.appendChild(
+        textEl("div", "meta", `出处：${hit.source}` + (hit.topic ? ` · ${hit.topic}` : ""))
+      );
+      list.appendChild(li);
+    });
+    block.appendChild(list);
+    box.appendChild(block);
+  }
 }
 
 async function runKbSearch(query) {
@@ -478,7 +539,8 @@ async function runKbSearch(query) {
   if (kbAbort) kbAbort.abort();
   kbAbort = new AbortController();
   try {
-    const res = await fetch(`/api/kb/search?q=${encodeURIComponent(trim)}&limit=8`, {
+    // 本地问答：/api/kb/answer 一次返回名词卡 + 最相关链接 + 相关章节
+    const res = await fetch(`/api/kb/answer?q=${encodeURIComponent(trim)}&limit=6`, {
       signal: kbAbort.signal,
     });
     const data = await res.json();
@@ -486,14 +548,14 @@ async function runKbSearch(query) {
       const msg = (data.error && data.error.message) || "检索失败，请稍后再试。";
       throw new Error(msg);
     }
-    renderKbResults(data);
-    $("kb-hint").textContent = "本地知识库即时检索 · 不消耗任何模型额度 · 结果带出处可核对";
+    renderKbAnswer(data);
+    $("kb-hint").textContent = KB_HINT_DEFAULT;
   } catch (err) {
     if (err.name === "AbortError") return; // 被新输入打断，忽略
     box.hidden = false;
     box.innerHTML = "";
     box.appendChild(textEl("p", "muted", err.message || "检索失败。"));
-    $("kb-hint").textContent = "本地知识库即时检索 · 不消耗任何模型额度 · 结果带出处可核对";
+    $("kb-hint").textContent = KB_HINT_DEFAULT;
   }
 }
 
@@ -845,6 +907,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // 历史页：只做列表加载与刷新，不触碰首页专属元素
     loadHistory();
     $("history-refresh").addEventListener("click", loadHistory);
+    return;
+  }
+  if (!$("start-form")) {
+    // 子页面（/kb、/connect）：由各分页自己的脚本接管，这里不碰首页元素
     return;
   }
   loadProviders();

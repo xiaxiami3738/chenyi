@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="hero">
+  <img class="hero-mascot" src="/static/img/whale-hero.png" alt="" aria-hidden="true" loading="lazy">
   <h1>让普通人快速接手 AI 开发</h1>
   <p class="lead">
     想先弄清楚一个概念？直接在上面的知识库搜索框里提问，<strong>零费用</strong>获得带出处的回答。
@@ -53,6 +54,12 @@
     <button type="submit" class="btn btn-primary" id="kb-btn">搜索</button>
   </form>
   <p class="hint" id="kb-hint">本地知识库即时检索 · 不消耗任何模型额度 · 结果带出处可核对</p>
+  <p class="kb-mode" id="kb-mode">
+    <span class="kb-mode-tag">本地检索</span>
+    当前只用离线知识库回答（<strong>零 Token、不花钱</strong>）：先给名词解释，再给一个最相关的开源项目。
+    接入你自己的模型 API 后可以开启 AI 对话式回答 →
+    <a href="/connect">去接入</a>
+  </p>
   <div id="kb-results" class="kb-results" hidden></div>
 </section>
 

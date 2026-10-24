@@ -122,6 +122,10 @@ class KBDoc:
     topic: str = ""
     url: str = ""
     section: str = ""  # chapter 的小节标题
+    # 名词卡的结构化字段（前端「词条解释」卡片直接使用，避免只给一段拼接文本）
+    definition: str = ""
+    analogy: str = ""
+    pitfalls: str = ""
 
 
 @dataclass
@@ -252,6 +256,9 @@ def _load_terms(seed_dir: Path) -> list[KBDoc]:
                 body=body,
                 source="terms.json",
                 topic=str(item.get("topic", "术语")),
+                definition=definition,
+                analogy=analogy,
+                pitfalls=pitfalls,
             )
         )
     return docs
@@ -316,9 +323,118 @@ class KBIndex:
     # ── 查询 ───────────────────────────────────────────────
 
     def search(self, query: str, limit: int = 8) -> list[KBHit]:
+        ranked, matched_terms = self._rank(query, limit)
+        return [
+            KBHit(
+                kind=self.docs[idx].kind,
+                title=self.docs[idx].title,
+                source=self.docs[idx].source,
+                topic=self.docs[idx].topic,
+                url=self.docs[idx].url,
+                snippet=self._snippet(self.docs[idx].body, matched_terms),
+                score=score,
+            )
+            for idx, score in ranked
+        ]
+
+    def answer(self, query: str, limit: int = 8) -> dict:
+        """本地零 Token 问答结果：把用户句子里命中的名词解释 + 一条最相关开源链接整理好。
+
+        首页在「未接入 API」时使用：先给出知识库里的名词解释，再给一条最相关的
+        GitHub 开源项目，最后附上书中相关章节，全部带出处，便于核对。
+        """
+        query_terms = set(tokenize(query))
+        term_items = self._term_matches(query_terms, limit=3)
+        # 章节按整体相关性排序（名词卡与链接单独挑，避免被章节的高分挤掉）
+        ranked, matched_terms = self._rank(query, max(limit * 3, 12))
+        chapters = [
+            KBHit(
+                kind=self.docs[idx].kind,
+                title=self.docs[idx].title,
+                source=self.docs[idx].source,
+                topic=self.docs[idx].topic,
+                url=self.docs[idx].url,
+                snippet=self._snippet(self.docs[idx].body, matched_terms),
+                score=score,
+            ).to_dict()
+            for idx, score in ranked
+            if self.docs[idx].kind == "chapter"
+        ][:limit]
+        link_doc = self._best_link(query_terms)
+        link = (
+            {
+                "kind": "link",
+                "title": link_doc.title,
+                "topic": link_doc.topic,
+                "url": link_doc.url,
+                "why": link_doc.body,
+                "source": link_doc.source,
+            }
+            if link_doc
+            else None
+        )
+        return {
+            "query": query,
+            "terms": term_items,
+            "chapters": chapters,
+            "link": link,
+            "total": len(term_items) + len(chapters) + (1 if link else 0),
+        }
+
+    def _term_matches(self, query_terms: set[str], limit: int = 3) -> list[dict]:
+        """从用户输入句子里找出知识库已有的名词，返回结构化词条卡片。
+
+        只比对名词卡标题里的词：命中拉丁专有名词（如 agent、rag、token）权重更高，
+        中文词按命中个数累计。这样「什么是 Agent」会先给出 Agent 词条，而不是被
+        正文里到处出现的章节挤掉。
+        """
+        scored: list[tuple[int, float]] = []
+        for idx, doc in enumerate(self.docs):
+            if doc.kind != "term":
+                continue
+            overlap = query_terms & self._title_terms[idx]
+            if not overlap:
+                continue
+            weight = sum(2.0 if token.isascii() else 1.0 for token in overlap)
+            scored.append((idx, weight))
+        scored.sort(key=lambda kv: kv[1], reverse=True)
+        cards: list[dict] = []
+        for idx, weight in scored[:limit]:
+            doc = self.docs[idx]
+            cards.append(
+                {
+                    "term": doc.title,
+                    "topic": doc.topic,
+                    "definition": doc.definition,
+                    "analogy": doc.analogy,
+                    "pitfalls": doc.pitfalls,
+                    "source": doc.source,
+                    "score": round(weight, 2),
+                }
+            )
+        return cards
+
+    def _best_link(self, query_terms: set[str]):
+        """挑一条与查询最相关的开源项目：标题命中 > 所属主题命中 > 说明命中。"""
+        best_doc: KBDoc | None = None
+        best_score = 0.0
+        for idx, doc in enumerate(self.docs):
+            if doc.kind != "link":
+                continue
+            score = (
+                3.0 * len(query_terms & self._title_terms[idx])
+                + 2.5 * len(query_terms & set(tokenize(doc.topic)))
+                + 1.0 * len(query_terms & set(tokenize(doc.body)))
+            )
+            if score > best_score:
+                best_doc, best_score = doc, score
+        return best_doc
+
+    def _rank(self, query: str, limit: int) -> tuple[list[tuple[int, float]], set[str]]:
+        """BM25 近似的 TF-IDF 打分，返回 [(文档下标, 分数)] 与命中词集合。"""
         terms = tokenize(query)
         if not terms:
-            return []
+            return [], set()
         n_docs = max(len(self.docs), 1)
         scores: dict[int, float] = {}
         matched_terms: set[str] = set()
@@ -334,21 +450,8 @@ class KBIndex:
                     tf_weight *= 2.5  # 标题命中加权
                 scores[doc_idx] = scores.get(doc_idx, 0.0) + tf_weight * idf
         if not scores:
-            return []
-
-        ranked = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)[:limit]
-        return [
-            KBHit(
-                kind=self.docs[idx].kind,
-                title=self.docs[idx].title,
-                source=self.docs[idx].source,
-                topic=self.docs[idx].topic,
-                url=self.docs[idx].url,
-                snippet=self._snippet(self.docs[idx].body, matched_terms),
-                score=score,
-            )
-            for idx, score in ranked
-        ]
+            return [], matched_terms
+        return sorted(scores.items(), key=lambda kv: kv[1], reverse=True)[:limit], matched_terms
 
     def overview(self) -> dict:
         """首页浏览所需信息：章节目录 + 术语/链接主题。"""

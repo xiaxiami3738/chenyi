@@ -1,0 +1,141 @@
+/* /connect 页面专属样式（只在 connect.html 里引入）。
+   配色全部沿用主站 CSS 变量；深色终端区块用 #0f172a / #111827，
+   强调色仍用主站蓝。所有类名以 cx- 前缀，避免污染其它页面。 */
+
+.cx-hero { padding-bottom: 4px; }
+.cx-hero .lead a { color: var(--primary); font-weight: 600; text-decoration: none; }
+.cx-hero .lead a:hover { text-decoration: underline; }
+
+/* ── 终端质感区块（Codex CLI 风格） ─────────────────────────── */
+.cx-terminal {
+  margin: 24px 0 4px;
+  background: #0f172a;
+  border: 1px solid #111827;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, .26);
+  overflow: hidden;
+}
+
+.cx-terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  background: #111827;
+  border-bottom: 1px solid #1e293b;
+}
+.cx-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.cx-dot-r { background: #f87171; }
+.cx-dot-y { background: #fbbf24; }
+.cx-dot-g { background: #34d399; }
+.cx-terminal-title {
+  margin-left: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: .02em;
+  color: #94a3b8;
+}
+
+.cx-terminal-body {
+  margin: 0;
+  padding: 16px 18px 12px;
+  font-family: var(--mono);
+  font-size: 12.8px;
+  line-height: 1.95;
+  color: #e2e8f0;
+  overflow-x: auto;
+}
+.cx-line { margin: 0; white-space: pre-wrap; word-break: break-word; }
+.cx-indent { padding-left: 18px; }
+.cx-dollar { color: #60a5fa; font-weight: 700; margin-right: 4px; }
+.cx-key { display: inline-block; min-width: 76px; color: #94a3b8; }
+.cx-val { color: #f8fafc; }
+.cx-dim { color: #64748b; }
+
+/* 左下角状态行：轻量终端 prompt 质感，用文字符号而不是 emoji */
+.cx-status {
+  margin: 0;
+  padding: 9px 18px;
+  background: #0b1220;
+  border-top: 1px solid #1e293b;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #cbd5e1;
+  min-height: 20px;
+  word-break: break-word;
+}
+.cx-status.ok { color: #86efac; }
+.cx-status.warn { color: #fcd34d; }
+.cx-status.info { color: #93c5fd; }
+
+/* ── 表单细节 ───────────────────────────────────────────────── */
+.cx-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.cx-row .hint { flex: 1 1 220px; }
+
+/* 覆盖 style.css 里 .field > span 的 700 字重，让字段内提示保持轻量 */
+.field > span.hint { font-weight: 500; font-size: 13px; color: var(--muted); }
+
+.cx-code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 6px;
+  color: var(--text-2);
+  word-break: break-all;
+}
+
+/* 提示语气：成功绿 / 警示橙，均取主站状态变量 */
+.hint.cx-ok { color: var(--ok); font-weight: 600; }
+.hint.cx-warn { color: var(--warn); font-weight: 600; }
+
+/* 代存区块里的 h3 图标（style.css 只给 h2 定义了 heading-icon 背景） */
+.vault-block h3 .heading-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.vault-block h3 .heading-icon svg { display: block; }
+.vault-block .cx-row { margin: 10px 0 2px; }
+
+/* ── 安全说明 ───────────────────────────────────────────────── */
+.cx-safety {
+  list-style: none;
+  margin: 6px 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.cx-safety li {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--primary);
+  border-radius: 10px;
+  background: var(--bg);
+  padding: 11px 14px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+.cx-safety li strong { color: var(--primary-dark); }
+
+/* ── 响应式：窄屏单列 + 终端字号收紧 ───────────────────────── */
+@media (max-width: 680px) {
+  .cx-terminal { margin-top: 18px; border-radius: 15px; }
+  .cx-terminal-body { font-size: 11.6px; padding: 13px 12px 10px; line-height: 1.85; }
+  .cx-status { padding: 8px 12px; font-size: 11.5px; }
+  .cx-key { min-width: 66px; }
+  .cx-indent { padding-left: 12px; }
+  .cx-row .hint { flex-basis: 100%; }
+}
+
+/* 高对比 / 减少动效偏好下不做任何动画，保持静态 */
+@media (prefers-reduced-motion: reduce) {
+  .cx-terminal { box-shadow: none; }
+}
