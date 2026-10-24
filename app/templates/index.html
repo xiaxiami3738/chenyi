@@ -53,7 +53,7 @@
       aria-label="搜索知识库">
     <button type="submit" class="btn btn-primary" id="kb-btn">搜索</button>
   </form>
-  <img class="kb-mascot" src="/static/img/whale-xiaoyu-search.png" alt="" aria-hidden="true" loading="lazy">
+  <img class="kb-mascot" src="/static/img/whale-xiaoyu-search-q.png" alt="" aria-hidden="true" loading="lazy">
   </div>
   <p class="hint" id="kb-hint">本地知识库即时检索 · 不消耗任何模型额度 · 结果带出处可核对</p>
   <p class="kb-mode" id="kb-mode">
@@ -83,17 +83,25 @@
   <div id="browse-list" class="browse-list"></div>
 </section>
 
-<section id="xiaoyu-card" class="card xiaoyu-card">
+<section class="card xiaoyu-card" id="xiaoyu-card" data-state="locked">
   <div class="xiaoyu-head">
-    <img class="xiaoyu-avatar" src="/static/img/whale-xiaoyu-avatar.png" alt="鲸小鱼头像" width="56" height="56">
-    <div><h2 class="xiaoyu-name">鲸小鱼</h2><p class="muted xiaoyu-tagline">深海来的傲娇鲸鱼娘 · 爱米饭爱晒太阳 · 会叫你「主人」</p></div>
+    <img class="xiaoyu-avatar" src="/static/img/whale-xiaoyu-avatar.png" alt="" aria-hidden="true" width="44" height="44" loading="lazy">
+    <div class="xiaoyu-id">
+      <h2 class="xiaoyu-name">鲸小鱼</h2>
+      <p class="xiaoyu-tagline">深海来的鲸鱼娘 · 爱米饭爱晒太阳</p>
+    </div>
+    <span class="xiaoyu-state" id="xiaoyu-state">未接入</span>
   </div>
-  <div id="xiaoyu-log" class="xiaoyu-log"><!-- 消息气泡 --></div>
-  <form id="xiaoyu-form" class="xiaoyu-form">
-    <input id="xiaoyu-input" type="text" maxlength="1000" placeholder="跟鲸小鱼说点什么…（例如：今天吃什么）" autocomplete="off">
-    <button id="xiaoyu-send" class="btn btn-primary" type="submit">说话</button>
+  <div class="xiaoyu-log" id="xiaoyu-log" aria-live="polite"></div>
+  <div class="xiaoyu-locked" id="xiaoyu-locked">
+    <p class="xiaoyu-locked-text">对话会花你自己的模型额度，所以没接入 API 时她只待在下面晒太阳。</p>
+    <a class="btn btn-ghost btn-small" href="/connect">去接入 API →</a>
+  </div>
+  <form class="xiaoyu-form" id="xiaoyu-form" hidden>
+    <input id="xiaoyu-input" type="text" maxlength="1000" placeholder="跟鲸小鱼说点什么…" autocomplete="off" aria-label="对鲸小鱼说话">
+    <button class="btn btn-primary" id="xiaoyu-send" type="submit">发送</button>
   </form>
-  <p id="xiaoyu-hint" class="hint">提示：现在是本地预设台词；<a href="/connect">接入你自己的模型 API</a> 后她就能自由对话。</p>
+  <p class="hint xiaoyu-hint" id="xiaoyu-hint" hidden></p>
 </section>
 
 <section class="card" id="start-card">
@@ -164,65 +172,6 @@
   </div>
 </section>
 
-<section class="card" id="byok-card">
-  <h2>
-    <span class="heading-icon" aria-hidden="true">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="8" cy="15" r="4"/>
-        <path d="M10.85 12.15 19 4"/>
-        <path d="M18 5l2 2"/>
-        <path d="M15 8l2 2"/>
-      </svg>
-    </span>
-    用哪个模型（自带 Key）
-  </h2>
-  <p class="muted">
-    知识库问答<strong>不需要任何 Key</strong>。只有想生成个性化学习路径时才需要模型 Key：
-    你填的 Key 只存在<strong>你自己的浏览器</strong>里，每次生成时随请求头单次透传，服务端不落库、不写日志。
-  </p>
-  <div id="insecure-warning" class="warning" hidden>
-    当前页面不是 HTTPS，填入真实 Key 存在被中间人截获的风险。建议只在 Demo 模式体验，或改用 HTTPS 部署。
-  </div>
-  <div class="form-grid">
-    <label class="field">
-      <span>供应商</span>
-      <select id="provider"></select>
-    </label>
-    <label class="field">
-      <span>模型</span>
-      <input id="model" type="text" placeholder="留空使用该供应商默认模型">
-    </label>
-    <label class="field field-wide">
-      <span>API Key（仅存本机浏览器）</span>
-      <input id="api-key" type="password" autocomplete="off" placeholder="sk-…">
-    </label>
-    <label class="field field-wide">
-      <span>自定义 Base URL（可选，仅支持 https / 本机地址）</span>
-      <input id="base-url" type="url" placeholder="https://your-gateway.example.com/v1">
-    </label>
-    <div class="field field-wide actions">
-      <button type="button" class="btn" id="save-key">保存在本机浏览器</button>
-      <button type="button" class="btn btn-ghost" id="clear-key">清除本机保存</button>
-      <span class="hint" id="key-status"></span>
-    </div>
-  </div>
-
-  <div id="vault-block" class="vault-block">
-    <h3>服务端加密代存（可选）</h3>
-    <p class="muted">
-      不想每次填 Key？可以把 Key 加密保存到本站服务器，之后生成时勾选
-      「使用我已保存到服务器的 Key」即可免填。保存后才会调用你自己的模型接口来回答；
-      服务器只存加密密文，不存明文；需在真实模式（HTTPS）下使用。
-    </p>
-    <p class="hint" id="vault-status"></p>
-    <div id="vault-scopes" class="vault-scopes"></div>
-    <div class="field field-wide actions">
-      <button type="button" class="btn" id="save-vault" disabled>保存当前 Key 到服务器（加密代存）</button>
-      <button type="button" class="btn btn-ghost" id="clear-vault" disabled>清除服务器代存</button>
-    </div>
-  </div>
-</section>
-
 <section class="card" id="links-card">
   <h2>
     <span class="heading-icon" aria-hidden="true">
@@ -239,3 +188,5 @@
   <div id="links-list" class="links"></div>
 </section>
 {% endblock %}
+
+{% block head %}<link rel="stylesheet" href="/static/xiaoyu.css">{% endblock %}

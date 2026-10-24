@@ -141,6 +141,18 @@
   <p class="hint">本页「测试连接」只做本地格式校验，不会请求任何外部 API，避免 Key 被意外发出去。</p>
 </section>
 
+<!-- 下一步：把用户送回首页继续对话。首页只做检索与对话，接入闭环（填写 / 代存 / 清除）都在本页 -->
+<section class="cx-next" id="cx-next" data-state="idle" aria-label="下一步">
+  <p class="cx-next-idle">
+    还没配置 Key。填好并保存后，回首页就能和鲸小鱼自由对话，也能生成个性化学习路径。
+  </p>
+  <div class="cx-next-ready">
+    <p class="cx-next-ready-text"><strong class="cx-next-ok">✓ 已就绪。</strong>现在回首页，鲸小鱼就能用你自己的模型回答你。</p>
+    <a class="btn btn-primary" id="cx-next-cta" href="/">回首页试试 →</a>
+  </div>
+  <p class="cx-next-note">首页只做检索和对话；Key 的填写、加密代存、清除都在这一页。</p>
+</section>
+
 <noscript>
   <p class="warning">这个页面需要 JavaScript 才能读取供应商列表与保存本机配置，请开启后再试。</p>
 </noscript>

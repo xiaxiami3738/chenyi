@@ -125,6 +125,41 @@
 }
 .cx-safety li strong { color: var(--primary-dark); }
 
+/* ── 下一步：回首页继续对话（与首页极简卡片同一语言：1px 描边、无渐变无重阴影） ── */
+.cx-next {
+  margin: 18px 0 4px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+/* 两态切换：idle 只留说明，ready 才出现「回首页试试」按钮 */
+.cx-next[data-state="idle"] .cx-next-ready { display: none; }
+.cx-next[data-state="ready"] .cx-next-idle { display: none; }
+
+.cx-next-idle,
+.cx-next-ready-text {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.7;
+}
+.cx-next-idle { color: var(--muted); }
+.cx-next-ready {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+.cx-next-ready-text { flex: 1 1 280px; color: var(--text-2); }
+.cx-next-ok { color: var(--ok); }
+
+.cx-next-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
 /* ── 响应式：窄屏单列 + 终端字号收紧 ───────────────────────── */
 @media (max-width: 680px) {
   .cx-terminal { margin-top: 18px; border-radius: 15px; }
@@ -133,6 +168,9 @@
   .cx-key { min-width: 66px; }
   .cx-indent { padding-left: 12px; }
   .cx-row .hint { flex-basis: 100%; }
+  .cx-next { padding: 14px; }
+  .cx-next-ready { align-items: flex-start; }
+  .cx-next-ready .btn { width: 100%; }
 }
 
 /* 高对比 / 减少动效偏好下不做任何动画，保持静态 */

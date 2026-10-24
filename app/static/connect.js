@@ -84,6 +84,18 @@
       setStatus("warn", STATUS.idle);
     }
     updateTerminal();
+    syncNext();
+  }
+
+  /** 「下一步」区块：本机已保存 Key，或服务器上已有代存密文时切到 ready。
+      只认「已落盘」的状态（localStorage / 服务端 scopes），不认输入框里的临时内容，
+      这样用户改了没保存时不会误报「已就绪」。 */
+  function syncNext() {
+    const el = $("cx-next");
+    if (!el) return;
+    const localReady = Boolean(localStorage.getItem(LS.apiKey));
+    const vaultReady = vaultState.enabled && (vaultState.scopes || []).length > 0;
+    el.dataset.state = localReady || vaultReady ? "ready" : "idle";
   }
 
   // ── 供应商列表 ───────────────────────────────────────────────
@@ -211,6 +223,7 @@
     setHint("cx-test-result", "✓ 格式校验通过，可以开始生成学习路径。", "ok");
     setStatus("ok", STATUS.saved);
     updateTerminal();
+    syncNext();
   }
 
   function clearLocal() {
@@ -280,6 +293,7 @@
       saveBtn.disabled = true;
       clearBtn.disabled = true;
     }
+    syncNext();
   }
 
   /** 代存 scope：默认取供应商 id；Base URL 被改过时退回自定义 base_url。 */
@@ -349,6 +363,7 @@
       vaultState.scopes = Array.from(new Set(vaultState.scopes.concat(scope))).sort();
       renderVaultScopes();
       setStatus("ok", "✓ 已加密保存到服务器 · 之后可免填生成");
+      syncNext();
     } catch (err) {
       setHint("cx-vault-note", "⚠ " + err.message, "warn");
       setStatus("warn", "⚠ 代存失败 · " + err.message);
@@ -375,6 +390,8 @@
       const data = await readJson(res);
       vaultState.scopes = vaultState.scopes.filter((s) => s !== scope);
       renderVaultScopes();
+      // 删除后如果本机也没有 Key，就回到「下一步：还没配置」的状态
+      syncNext();
       setHint(
         "cx-vault-note",
         data.deleted ? "✓ 已删除服务器上的密文（scope：" + scope + "）" : "服务器上本来就没有这个 scope 的密文。",

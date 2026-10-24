@@ -1,0 +1,309 @@
+/* ════════════════════════════════════════════════════════════════
+   鲸小鱼对话框 · 简约版
+   · 一层卡片、一条细描边：无渐变、无阴影堆叠、无彩色边条、无头像光环
+   · 两态由 #xiaoyu-card[data-state="locked|ready"] 切换
+   · 只用站内 CSS 变量；加载顺序需在 style.css 之后
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── 外壳：压掉 .card 的厚内边距与投影，只留一条细描边 ───────── */
+#xiaoyu-card {
+  padding: 20px;
+  margin: 20px 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+
+/* ── 头部一行：头像 + 名字/副标题 + 状态徽章，三者垂直居中 ────── */
+#xiaoyu-card .xiaoyu-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#xiaoyu-card .xiaoyu-avatar {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: var(--primary-soft);
+  border: 0;
+  box-shadow: none;
+}
+
+#xiaoyu-card .xiaoyu-id {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#xiaoyu-card .xiaoyu-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: var(--text);
+}
+
+#xiaoyu-card .xiaoyu-tagline {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+#xiaoyu-card .xiaoyu-state {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: .01em;
+  white-space: nowrap;
+}
+
+#xiaoyu-card[data-state="locked"] .xiaoyu-state {
+  background: #f1f5f9;
+  /* 比 #64748b 略深：在 #f1f5f9 上 4.34:1 → 5.46:1，过 4.5:1 */
+  color: var(--muted);
+}
+
+#xiaoyu-card[data-state="ready"] .xiaoyu-state {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+/* ── 消息区：一行一条，气泡最大 78% ──────────────────────────── */
+#xiaoyu-card .xiaoyu-log {
+  display: grid;
+  gap: 10px;
+  max-height: 280px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin-top: 16px;
+  padding-right: 2px;
+  scrollbar-width: thin;
+}
+
+#xiaoyu-card .xiaoyu-log:empty {
+  display: none;
+}
+
+#xiaoyu-card .xiaoyu-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+#xiaoyu-card .xiaoyu-msg-avatar {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  margin-top: 3px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--primary-soft);
+}
+
+#xiaoyu-card .xiaoyu-msg-avatar-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#xiaoyu-card .xiaoyu-msg-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+  max-width: 78%;
+}
+
+#xiaoyu-card .xiaoyu-bubble {
+  max-width: 100%;
+  padding: 9px 13px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text);
+  background: #f5f7fb;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+#xiaoyu-card .xiaoyu-msg.is-user {
+  flex-direction: row-reverse;
+}
+
+#xiaoyu-card .xiaoyu-msg.is-user .xiaoyu-msg-main {
+  align-items: flex-end;
+}
+
+#xiaoyu-card .xiaoyu-msg.is-user .xiaoyu-msg-avatar {
+  display: none;
+}
+
+#xiaoyu-card .xiaoyu-msg.is-user .xiaoyu-bubble {
+  background: var(--primary);
+  color: #fff;
+  border-top-right-radius: 4px;
+}
+
+#xiaoyu-card .xiaoyu-scripted {
+  padding-left: 1px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+#xiaoyu-card .xiaoyu-link {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(37, 99, 235, .35);
+}
+
+#xiaoyu-card .xiaoyu-link:hover {
+  text-decoration-color: currentColor;
+}
+
+/* ── 锁定态：虚线提示框替代输入行，别让卡片显得空 ───────────── */
+#xiaoyu-card .xiaoyu-locked {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 90px;
+  margin-top: 16px;
+  padding: 16px 18px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: #f8fafd;
+}
+
+#xiaoyu-card .xiaoyu-locked-text {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+#xiaoyu-card .xiaoyu-locked a {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+/* ── 可用态：输入行 + 极简 hint ──────────────────────────────── */
+#xiaoyu-card .xiaoyu-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+#xiaoyu-card[data-state="ready"] .xiaoyu-form {
+  display: flex;
+}
+
+#xiaoyu-card[data-state="locked"] .xiaoyu-form {
+  display: none;
+}
+
+#xiaoyu-card[data-state="ready"] .xiaoyu-locked {
+  display: none;
+}
+
+#xiaoyu-card #xiaoyu-form input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 42px;
+  padding: 0 13px;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+
+#xiaoyu-card #xiaoyu-form input::placeholder {
+  color: var(--muted);
+}
+
+#xiaoyu-card #xiaoyu-form input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .16);
+}
+
+#xiaoyu-card #xiaoyu-form button {
+  flex: 0 0 auto;
+  height: 42px;
+  padding: 0 18px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+#xiaoyu-card #xiaoyu-form button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+#xiaoyu-card .xiaoyu-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* ── 窄屏：留白收紧，气泡放宽到 86% ─────────────────────────── */
+@media (max-width: 680px) {
+  #xiaoyu-card {
+    padding: 16px;
+  }
+
+  #xiaoyu-card .xiaoyu-avatar {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  #xiaoyu-card .xiaoyu-msg-main {
+    max-width: 86%;
+  }
+
+  #xiaoyu-card .xiaoyu-log {
+    max-height: 240px;
+  }
+
+  #xiaoyu-card .xiaoyu-locked {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    min-height: 0;
+    padding: 14px;
+  }
+
+  #xiaoyu-card .xiaoyu-locked-text {
+    max-width: none;
+  }
+}

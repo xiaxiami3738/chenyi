@@ -70,72 +70,31 @@ function closeModePopover() {
   $("mode-badge").setAttribute("aria-expanded", "false");
 }
 
-async function loadProviders() {
-  const select = $("provider");
-  try {
-    const res = await fetch("/api/providers");
-    const data = await res.json();
-    select.innerHTML = "";
-    const none = document.createElement("option");
-    none.value = "";
-    none.textContent = "（不填，用 Demo 预置内容）";
-    select.appendChild(none);
-    data.providers.forEach((p) => {
-      const opt = document.createElement("option");
-      opt.value = p.id;
-      opt.textContent = p.label;
-      opt.dataset.baseUrl = p.base_url;
-      opt.dataset.model = p.default_model;
-      select.appendChild(opt);
-    });
-    select.value = localStorage.getItem(LS.provider) || "";
-    syncProviderDefaults();
-  } catch (err) {
-    select.innerHTML = "<option value=''>无法加载供应商列表</option>";
-  }
+/* ── 接入配置：只读 /connect 页存入的 localStorage ─────────────────
+   首页不再提供供应商/Key 表单（用户要求接入独立到 /connect，避免重复），
+   这里只负责读取那份配置，供「生成学习路径」和「鲸小鱼对话」使用。 */
+
+const CONNECT_LS = {
+  provider: "chenyi.connect.provider",
+  model: "chenyi.connect.model",
+  baseUrl: "chenyi.connect.baseUrl",
+  apiKey: "chenyi.connect.apiKey",
+};
+
+/** 优先读 /connect 页的新键，回退到旧版首页表单留下的老键。 */
+function connectValue(kind, legacyKey) {
+  const fresh = (localStorage.getItem(CONNECT_LS[kind]) || "").trim();
+  if (fresh) return fresh;
+  return legacyKey ? (localStorage.getItem(legacyKey) || "").trim() : "";
 }
 
-function syncProviderDefaults() {
-  const select = $("provider");
-  const opt = select.selectedOptions[0];
-  const modelInput = $("model");
-  if (opt && opt.dataset.model) {
-    modelInput.placeholder = "默认：" + opt.dataset.model;
-  }
-}
-
-function restoreKeyFields() {
-  $("model").value = localStorage.getItem(LS.model) || "";
-  $("base-url").value = localStorage.getItem(LS.baseUrl) || "";
-  const key = localStorage.getItem(LS.key);
-  if (key) {
-    $("api-key").value = key;
-    $("key-status").textContent = "已从本机浏览器读取已保存的 Key（不会上传给本站）。";
-  }
-}
-
-function saveKeyFields() {
-  localStorage.setItem(LS.provider, $("provider").value);
-  localStorage.setItem(LS.model, $("model").value);
-  localStorage.setItem(LS.baseUrl, $("base-url").value);
-  const key = $("api-key").value.trim();
-  if (key) {
-    localStorage.setItem(LS.key, key);
-    $("key-status").textContent = "已保存在本机浏览器 localStorage。";
-  } else {
-    localStorage.removeItem(LS.key);
-    $("key-status").textContent = "未填写 Key，将以 Demo 模式运行。";
-  }
-}
-
-function clearKeyFields() {
-  Object.values(LS).forEach((k) => {
-    if (k !== LS.clientId) localStorage.removeItem(k);
-  });
-  $("api-key").value = "";
-  $("model").value = "";
-  $("base-url").value = "";
-  $("key-status").textContent = "已清除本机保存的 Key 与模型配置。";
+function connectConfig() {
+  return {
+    providerId: connectValue("provider", LS.provider),
+    model: connectValue("model", LS.model),
+    baseUrl: connectValue("baseUrl", LS.baseUrl),
+    apiKey: connectValue("apiKey", LS.key),
+  };
 }
 
 /* ── 生成主流程：提交 → 建会话 → SSE 逐条渲染 ───────────────── */
@@ -150,9 +109,9 @@ function currentPayload() {
     level: $("level").value,
     weak_points: $("weak_points").value.trim(),
     daily_minutes: Number($("daily_minutes").value || 30),
-    provider_id: $("provider").value || null,
-    base_url: $("base-url").value.trim() || null,
-    model: $("model").value.trim() || null,
+    provider_id: connectConfig().providerId || null,
+    base_url: connectConfig().baseUrl || null,
+    model: connectConfig().model || null,
     use_saved_key: useSavedKeyChecked(),
   };
 }
@@ -309,7 +268,7 @@ async function startGeneration(event) {
   const headers = { "Content-Type": "application/json" };
   if (!useSavedKeyChecked()) {
     // 未勾选代存：本机浏览器 Key 单次透传，服务端不落库
-    const key = $("api-key").value.trim();
+    const key = connectConfig().apiKey;
     if (key) headers["X-LLM-Key"] = key;
   }
   // 勾选代存时不发 X-LLM-Key，由服务端用加密代存的 Key 回答问题
@@ -659,117 +618,37 @@ async function loadBrowse() {
   }
 }
 
-function checkInsecure() {
-  if (location.protocol !== "https:" && !["localhost", "127.0.0.1"].includes(location.hostname)) {
-    $("insecure-warning").hidden = false;
-  }
-}
-
-/* ── M7.3：服务端加密代存（可选）────────────────────────── */
+/* ── 服务端代存状态（首页只读，写入/清除都在 /connect） ────── */
 
 let vaultState = { enabled: false, reason: null, https: false, scopes: [] };
 
 async function loadVaultState() {
-  if (!$("vault-block")) return;
   try {
     const res = await fetch(`/api/vault?client_id=${encodeURIComponent(ensureClientId())}`);
     vaultState = await res.json();
   } catch (err) {
     vaultState = { enabled: false, reason: null, https: false, scopes: [] };
   }
-  renderVaultUI();
+  syncSavedKeyCheckbox();
 }
 
-function currentVaultScope() {
-  const provider = $("provider").value;
-  if (provider) return provider;
-  return $("base-url").value.trim() || "";
-}
-
-function renderVaultUI() {
-  const status = $("vault-status");
-  const scopesBox = $("vault-scopes");
-  const saveBtn = $("save-vault");
-  const clearBtn = $("clear-vault");
+/** 生成学习路径时的「用服务器代存的 Key」勾选框：只在真的可用时放开。 */
+function syncSavedKeyCheckbox() {
   const check = $("use-saved-key");
-  if (!status || !saveBtn) return;
-
-  if (!vaultState.enabled) {
-    const reasonText =
-      vaultState.reason === "vault_not_configured"
-        ? "服务器未配置主密钥（环境变量 VAULT_MASTER_KEY），代存功能未启用。"
-        : "当前为 Demo 模式，不调用真实模型，代存没有意义。";
-    status.textContent = "🔒 " + reasonText;
-    scopesBox.innerHTML = "";
-    saveBtn.disabled = true;
-    clearBtn.disabled = true;
-    if (check) { check.disabled = true; check.checked = false; }
-    return;
-  }
-  if (!vaultState.https) {
-    status.textContent = "当前连接不是 HTTPS（前置条件），代存已禁用，请通过 https 访问本站。";
-    status.className = "hint warn-text";
-  } else {
-    status.textContent = "代存可用：保存后才会调用你自己的模型接口来回答，之后生成时勾选上方选项即可免填。";
-    status.className = "hint";
-  }
-  saveBtn.disabled = !vaultState.https;
-  clearBtn.disabled = !vaultState.https;
-  scopesBox.innerHTML = "";
-  (vaultState.scopes || []).forEach((scope) => {
-    const chip = document.createElement("button");
-    chip.type = "button";
-    chip.className = "scope-chip";
-    chip.textContent = scope;
-    chip.title = "清除这个供应商的代存 Key";
-    chip.addEventListener("click", () => clearVault(scope));
-    scopesBox.appendChild(chip);
-  });
-  if (check) {
-    check.disabled = !vaultState.https || (vaultState.scopes || []).length === 0;
-  }
+  if (!check) return;
+  const usable = vaultState.enabled && vaultState.https && (vaultState.scopes || []).length > 0;
+  check.disabled = !usable;
+  if (!usable) check.checked = false;
 }
 
-async function saveVault() {
-  const scope = currentVaultScope();
-  const apiKey = $("api-key").value.trim();
-  if (!apiKey) {
-    $("key-status").textContent = "请先在上方「API Key」填入要代存的 Key。";
-    return;
-  }
-  if (!scope) {
-    $("key-status").textContent = "请先选择供应商或填写自定义 Base URL（代存按它区分）。";
-    return;
-  }
-  try {
-    const res = await fetch("/api/vault", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ client_id: ensureClientId(), scope, api_key: apiKey }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error((data.error && data.error.message) || "保存失败。");
-    $("key-status").textContent = `已加密保存到服务器（${scope}）。保存后才会调用你自己的模型接口来回答。`;
-    await loadVaultState();
-  } catch (err) {
-    $("key-status").textContent = err.message;
-  }
-}
-
-async function clearVault(scope) {
-  try {
-    const res = await fetch("/api/vault", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ client_id: ensureClientId(), scope }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error((data.error && data.error.message) || "清除失败。");
-    $("key-status").textContent = `已清除服务器上「${scope}」的代存 Key。`;
-    await loadVaultState();
-  } catch (err) {
-    $("key-status").textContent = err.message;
-  }
+/** 是否已经能调真实模型：本机 Key 或服务端代存二选一。 */
+function modelAccess() {
+  const cfg = connectConfig();
+  if (cfg.apiKey) return { ready: true, useSavedKey: false, config: cfg };
+  const scope = cfg.providerId || cfg.baseUrl;
+  const saved = vaultState.enabled && vaultState.https && scope
+    && (vaultState.scopes || []).indexOf(scope) >= 0;
+  return { ready: !!saved, useSavedKey: !!saved, config: cfg };
 }
 
 /* ── M3：下载 Markdown 与历史页 ───────────────────────── */
@@ -928,22 +807,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // 子页面（/kb、/connect）：由各分页自己的脚本接管，这里不碰首页元素
     return;
   }
-  loadProviders();
-  restoreKeyFields();
   loadLinks("");
   bindForm();
   bindKbSearch();
   loadBrowse();
-  checkInsecure();
-  loadVaultState();
-  $("provider").addEventListener("change", syncProviderDefaults);
-  $("save-key").addEventListener("click", saveKeyFields);
-  $("clear-key").addEventListener("click", clearKeyFields);
-  $("save-vault").addEventListener("click", saveVault);
-  $("clear-vault").addEventListener("click", () => {
-    const scope = currentVaultScope();
-    if (scope) clearVault(scope);
-  });
   const downloadBtn = $("download-md");
   if (downloadBtn) downloadBtn.addEventListener("click", downloadMarkdown);
   const popClose = $("mode-popover-close");
@@ -963,7 +830,8 @@ document.addEventListener("DOMContentLoaded", () => {
    · mode=demo / scripted=true 时在气泡下方标注「预设台词」 */
 
 const XIAOYU_OPENING = "哼，主人终于来了。（尾巴慢悠悠拍了一下）先说好，我才不是特意等你的。";
-const XIAOYU_SCRIPTED_NOTE = "预设台词 · 接入 API 后可自由对话";
+const XIAOYU_LOCKED_NOTE = "哼，主人还没给我接上模型，那我不说话。（尾巴一甩，缩回水里）";
+const XIAOYU_SCRIPTED_NOTE = "预设台词 · 本站 Demo 模式暂不调用真实模型";
 const XIAOYU_LIVE_NOTE = "已接入你的模型";
 const XIAOYU_MAX_BUBBLES = 12;
 const XIAOYU_TIMEOUT_MS = 30000;
@@ -1043,25 +911,6 @@ function xiaoyuAppendBubble(log, role, text, note, link) {
   return row;
 }
 
-function xiaoyuFieldValue(id) {
-  // 首页 BYOK 卡片里的可选字段：子页面没有元素时返回空串
-  const el = xiaoyuEl(id);
-  return el && typeof el.value === "string" ? el.value.trim() : "";
-}
-
-function xiaoyuSavedKeyChecked() {
-  // 复用「使用我已保存到服务器的 Key」勾选状态
-  if (typeof useSavedKeyChecked === "function") {
-    try {
-      return !!useSavedKeyChecked();
-    } catch (e) {
-      return false;
-    }
-  }
-  const el = xiaoyuEl("use-saved-key");
-  return !!(el && el.checked);
-}
-
 function xiaoyuErrorText(code, message) {
   if (code === "rate_limited") {
     return "主人说太快啦，等我喘口气（尾巴不满地拍水）";
@@ -1106,24 +955,29 @@ async function xiaoyuSend(message) {
     } catch (e) {
       clientId = "c_guest";
     }
-    const headers = { "Content-Type": "application/json" };
-    const useSavedKey = xiaoyuSavedKeyChecked();
-    if (!useSavedKey) {
-      // 未勾选代存：本机浏览器 Key 单次透传（与生成学习路径的做法一致）
-      const key = xiaoyuFieldValue("api-key");
-      if (key) headers["X-LLM-Key"] = key;
+    const access = modelAccess();
+    if (!access.ready) {
+      // 没接入任何模型就不发请求（用户要求：不接 API 不允许使用对话）
+      xiaoyuAppendBubble(log, "bot", XIAOYU_LOCKED_NOTE, "", { href: "/connect", label: "去接入 API →" });
+      return;
     }
-    // 勾选代存时不发 X-LLM-Key，由服务端使用加密代存的 Key
+    const headers = { "Content-Type": "application/json" };
+    const cfg = access.config;
+    if (!access.useSavedKey && cfg.apiKey) {
+      // 本机浏览器 Key 单次透传（与生成学习路径一致，服务端不落库）
+      headers["X-LLM-Key"] = cfg.apiKey;
+    }
+    // 使用服务端代存时不发 X-LLM-Key，由服务端解密代存的 Key
     const res = await fetch("/api/chat", {
       method: "POST",
       headers,
       body: JSON.stringify({
         client_id: clientId,
         message: message,
-        provider_id: xiaoyuFieldValue("provider") || null,
-        base_url: xiaoyuFieldValue("base-url") || null,
-        model: xiaoyuFieldValue("model") || null,
-        use_saved_key: useSavedKey,
+        provider_id: cfg.providerId || null,
+        base_url: cfg.baseUrl || null,
+        model: cfg.model || null,
+        use_saved_key: access.useSavedKey,
       }),
       signal: controller.signal,
     });
@@ -1174,6 +1028,34 @@ async function xiaoyuSend(message) {
   }
 }
 
+/** 按「有没有接入自己的模型」切换对话框两态：未接入只显示提示，不可输入。 */
+function applyXiaoyuGate(access) {
+  const card = xiaoyuEl("xiaoyu-card");
+  const form = xiaoyuEl("xiaoyu-form");
+  const locked = xiaoyuEl("xiaoyu-locked");
+  const badge = xiaoyuEl("xiaoyu-state");
+  const log = xiaoyuEl("xiaoyu-log");
+  if (!card || !form || !locked) return;
+
+  if (access.ready) {
+    card.dataset.state = "ready";
+    form.hidden = false;
+    locked.hidden = true;
+    if (badge) badge.textContent = access.useSavedKey ? "已连接 · 代存" : "已连接";
+    if (log && !log.children.length) {
+      // 本地开场白，不请求接口
+      xiaoyuAppendBubble(log, "bot", XIAOYU_OPENING, "");
+    }
+    return;
+  }
+
+  card.dataset.state = "locked";
+  form.hidden = true;
+  locked.hidden = false;
+  if (badge) badge.textContent = "未接入";
+  if (log) log.textContent = "";
+}
+
 function xiaoyuInit() {
   const form = xiaoyuEl("xiaoyu-form");
   const log = xiaoyuEl("xiaoyu-log");
@@ -1182,10 +1064,7 @@ function xiaoyuInit() {
   if (!form || !log || !input || !send) return; // 子页面没有这张卡片：直接跳过
 
   xiaoyuGuardAvatar(document.querySelector("#xiaoyu-card .xiaoyu-avatar"));
-  if (!log.children.length) {
-    // 本地开场白，不请求接口
-    xiaoyuAppendBubble(log, "bot", XIAOYU_OPENING, "");
-  }
+  applyXiaoyuGate(modelAccess());
 
   form.addEventListener("submit", function (ev) {
     ev.preventDefault(); // Enter 与点按钮都走这里
@@ -1199,8 +1078,19 @@ function xiaoyuInit() {
   });
 }
 
+/** 先按本机配置渲染，再用服务端代存状态复核一次（代存可能已存在）。 */
+async function xiaoyuBoot() {
+  if (!xiaoyuEl("xiaoyu-card")) return;
+  await loadVaultState();
+  applyXiaoyuGate(modelAccess());
+}
+
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", xiaoyuInit);
+  document.addEventListener("DOMContentLoaded", () => {
+    xiaoyuInit();
+    xiaoyuBoot();
+  });
 } else {
   xiaoyuInit();
+  xiaoyuBoot();
 }

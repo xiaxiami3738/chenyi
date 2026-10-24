@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>鲸小鱼对话框 · 两态预览</title>
+
+<!-- 预览页自带站内基础 tokens 与按钮样式，保证脱离 style.css 也能看到真实观感；
+     鲸小鱼对话框本身的样式全部来自 ../app/static/xiaoyu.css。 -->
+<style>
+  :root {
+    --bg: #f3f6fc;
+    --card: #ffffff;
+    --text: #0f172a;
+    --text-2: #334155;
+    --muted: #5b6472;
+    --line: #e4e9f2;
+    --line-strong: #cfd8e8;
+    --primary: #2563eb;
+    --primary-dark: #1e4fd0;
+    --primary-soft: #eff5ff;
+    --primary-line: #c7d8fb;
+    --ok: #15803d;
+    --ok-bg: #ecfdf3;
+    --ok-line: #a7e3c0;
+    --radius-lg: 18px;
+    --radius: 13px;
+    --radius-sm: 9px;
+    --font: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 32px 24px 48px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.7;
+    background:
+      radial-gradient(1000px 380px at 50% -160px, rgba(37, 99, 235, .08), transparent 70%),
+      linear-gradient(180deg, #e8eefb, var(--bg) 320px);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 26px 28px;
+    margin: 20px 0;
+    box-shadow: var(--shadow-1, 0 1px 2px rgba(15, 23, 42, .05), 0 2px 8px rgba(15, 23, 42, .04));
+  }
+
+  .btn {
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 11px 20px;
+    border-radius: 11px;
+    border: 1px solid var(--line-strong);
+    background: #fff;
+    color: var(--text);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    text-decoration: none;
+  }
+  .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn-ghost { background: transparent; }
+  .btn-small { padding: 5px 12px; font-size: 13px; border-radius: 8px; }
+
+  /* ── 预览页自身排版（不进产品样式） ─────────────────────── */
+  .demo { max-width: 1120px; margin: 0 auto; }
+  .demo-head { margin-bottom: 22px; }
+  .demo-title {
+    margin: 0 0 6px;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -.01em;
+  }
+  .demo-sub {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+  .demo-sub code,
+  .demo-grid code {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: 12px;
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: #eef2f9;
+    color: var(--text-2);
+  }
+  .demo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+  .demo-panel { min-width: 0; }
+  .demo-state {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0 0 2px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-2);
+  }
+  .demo-state span {
+    font-weight: 500;
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+  .demo-note {
+    margin: 22px 0 0;
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .demo-note code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+
+  @media (max-width: 860px) {
+    body { padding: 20px 14px 36px; }
+    .demo-grid { grid-template-columns: 1fr; gap: 8px; }
+  }
+</style>
+
+<link rel="stylesheet" href="../app/static/xiaoyu.css">
+</head>
+<body>
+<main class="demo">
+  <header class="demo-head">
+    <h1 class="demo-title">鲸小鱼对话框 · 两态预览</h1>
+    <p class="demo-sub">静态预览：对话框样式只来自 <code>app/static/xiaoyu.css</code>，两态由 <code>#xiaoyu-card[data-state]</code> 切换。</p>
+  </header>
+
+  <!-- 演示页并排展示两态，因此两张卡片共用 id="xiaoyu-card"（真实页面只有一个）；浏览器会为两者同时应用同一套规则。 -->
+  <div class="demo-grid">
+
+    <!-- ① 锁定态 -->
+    <section class="demo-panel">
+      <p class="demo-state">锁定态 <span>data-state="locked" · 未接入 API</span></p>
+      <section class="card xiaoyu-card" id="xiaoyu-card" data-state="locked">
+        <div class="xiaoyu-head">
+          <img class="xiaoyu-avatar" src="/static/img/whale-xiaoyu-avatar.png" alt="" aria-hidden="true" width="44" height="44" loading="lazy">
+          <div class="xiaoyu-id">
+            <h2 class="xiaoyu-name">鲸小鱼</h2>
+            <p class="xiaoyu-tagline">深海来的鲸鱼娘 · 爱米饭爱晒太阳</p>
+          </div>
+          <span class="xiaoyu-state" id="xiaoyu-state">未接入</span>
+        </div>
+        <div class="xiaoyu-log" id="xiaoyu-log" aria-live="polite">
+          <div class="xiaoyu-msg is-bot">
+            <div class="xiaoyu-msg-avatar"><img class="xiaoyu-msg-avatar-img" src="/static/img/whale-xiaoyu-avatar.png" alt=""></div>
+            <div class="xiaoyu-msg-main">
+              <div class="xiaoyu-bubble">哼，主人终于来了。（尾巴慢悠悠拍了一下）
+先说好，我才不是特意等你的。</div>
+              <span class="xiaoyu-scripted">预设台词 · 接入 API 后可自由对话</span>
+            </div>
+          </div>
+          <div class="xiaoyu-msg is-bot">
+            <div class="xiaoyu-msg-avatar"><img class="xiaoyu-msg-avatar-img" src="/static/img/whale-xiaoyu-avatar.png" alt=""></div>
+            <div class="xiaoyu-msg-main">
+              <div class="xiaoyu-bubble">想让我说话，得先把模型接上。（她翻了个身，尾巴有一下没一下地划水）</div>
+            </div>
+          </div>
+        </div>
+        <div class="xiaoyu-locked" id="xiaoyu-locked">
+          <p class="xiaoyu-locked-text">对话会花你自己的模型额度，所以没接入 API 时她只待在下面晒太阳。</p>
+          <a class="btn btn-ghost btn-small" href="/connect">去接入 API →</a>
+        </div>
+        <form class="xiaoyu-form" id="xiaoyu-form" hidden>
+          <input id="xiaoyu-input" type="text" maxlength="1000" placeholder="跟鲸小鱼说点什么…" autocomplete="off" aria-label="对鲸小鱼说话">
+          <button class="btn btn-primary" id="xiaoyu-send" type="submit">发送</button>
+        </form>
+        <p class="hint xiaoyu-hint" id="xiaoyu-hint" hidden></p>
+      </section>
+    </section>
+
+    <!-- ② 可用态 -->
+    <section class="demo-panel">
+      <p class="demo-state">可用态 <span>data-state="ready" · 已连接</span></p>
+      <section class="card xiaoyu-card" id="xiaoyu-card" data-state="ready">
+        <div class="xiaoyu-head">
+          <img class="xiaoyu-avatar" src="/static/img/whale-xiaoyu-avatar.png" alt="" aria-hidden="true" width="44" height="44" loading="lazy">
+          <div class="xiaoyu-id">
+            <h2 class="xiaoyu-name">鲸小鱼</h2>
+            <p class="xiaoyu-tagline">深海来的鲸鱼娘 · 爱米饭爱晒太阳</p>
+          </div>
+          <span class="xiaoyu-state" id="xiaoyu-state">已连接</span>
+        </div>
+        <div class="xiaoyu-log" id="xiaoyu-log" aria-live="polite">
+          <div class="xiaoyu-msg is-bot">
+            <div class="xiaoyu-msg-avatar"><img class="xiaoyu-msg-avatar-img" src="/static/img/whale-xiaoyu-avatar.png" alt=""></div>
+            <div class="xiaoyu-msg-main">
+              <div class="xiaoyu-bubble">主人今天来得挺早。（尾巴轻轻晃了晃）</div>
+            </div>
+          </div>
+          <div class="xiaoyu-msg is-user">
+            <div class="xiaoyu-msg-main">
+              <div class="xiaoyu-bubble">今天吃什么？</div>
+            </div>
+          </div>
+          <div class="xiaoyu-msg is-bot">
+            <div class="xiaoyu-msg-avatar"><img class="xiaoyu-msg-avatar-img" src="/static/img/whale-xiaoyu-avatar.png" alt=""></div>
+            <div class="xiaoyu-msg-main">
+              <div class="xiaoyu-bubble">白米饭。加两个蛋的话，我可以考虑多听你聊两句。（尾巴啪嗒啪嗒拍水）</div>
+            </div>
+          </div>
+          <div class="xiaoyu-msg is-bot">
+            <div class="xiaoyu-msg-avatar"><img class="xiaoyu-msg-avatar-img" src="/static/img/whale-xiaoyu-avatar.png" alt=""></div>
+            <div class="xiaoyu-msg-main">
+              <div class="xiaoyu-bubble">不过主人，模型额度好像用完了……（她心虚地把尾巴藏到身后）</div>
+              <a class="xiaoyu-link" href="/connect">去接入 →</a>
+            </div>
+          </div>
+        </div>
+        <div class="xiaoyu-locked" id="xiaoyu-locked">
+          <p class="xiaoyu-locked-text">对话会花你自己的模型额度，所以没接入 API 时她只待在下面晒太阳。</p>
+          <a class="btn btn-ghost btn-small" href="/connect">去接入 API →</a>
+        </div>
+        <form class="xiaoyu-form" id="xiaoyu-form">
+          <input id="xiaoyu-input" type="text" maxlength="1000" placeholder="跟鲸小鱼说点什么…" autocomplete="off" aria-label="对鲸小鱼说话">
+          <button class="btn btn-primary" id="xiaoyu-send" type="submit">发送</button>
+        </form>
+        <p class="hint xiaoyu-hint" id="xiaoyu-hint">对话会消耗你自己的模型额度；额度用尽时她会暂时说不上话。</p>
+      </section>
+    </section>
+
+  </div>
+
+  <p class="demo-note">切换方式：把 <code>#xiaoyu-card</code> 的 <code>data-state</code> 在 <code>locked</code> / <code>ready</code> 之间改；<code>ready</code> 显示输入行、<code>locked</code> 显示虚线提示框，两者互斥。徽章文案由 JS 写入。</p>
+</main>
+</body>
+</html>
