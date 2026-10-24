@@ -1,0 +1,28 @@
+{
+ "output": {
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "message": {
+     "content": [
+      {
+       "image": "https://dashscope-a717.oss-accelerate.aliyuncs.com/1d/c5/20261024/b15e7112/92464b78-4f64-983f-bcc4-239f21fa2e15_qwen_image3_serving_output_0.png?Expires=1792924122&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=bXZJZ%2BnblwKU%2BS6mScSfk81nbOk%3D",
+       "type": "image"
+      }
+     ],
+     "role": "assistant"
+    }
+   }
+  ],
+  "rewrite_status": "success"
+ },
+ "usage": {
+  "input_image_count": 0,
+  "input_image_type": "qima_input_1k",
+  "output_height": 1024,
+  "output_image_count": 1,
+  "output_image_type": "qima_output_1k",
+  "output_width": 1024
+ },
+ "request_id": "92464b78-4f64-983f-bcc4-239f21fa2e15"
+}

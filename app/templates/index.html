@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="hero">
-  <img class="hero-mascot" src="/static/img/whale-hero.png" alt="" aria-hidden="true" loading="lazy">
+  <img class="hero-mascot" src="/static/img/whale-xiaoyu-hero.png" alt="" aria-hidden="true" loading="lazy">
   <h1>让普通人快速接手 AI 开发</h1>
   <p class="lead">
     想先弄清楚一个概念？直接在上面的知识库搜索框里提问，<strong>零费用</strong>获得带出处的回答。
@@ -79,6 +79,19 @@
   </p>
   <div id="kb-topics" class="browse-topics"></div>
   <div id="browse-list" class="browse-list"></div>
+</section>
+
+<section id="xiaoyu-card" class="card xiaoyu-card">
+  <div class="xiaoyu-head">
+    <img class="xiaoyu-avatar" src="/static/img/whale-xiaoyu-avatar.png" alt="鲸小鱼头像" width="56" height="56">
+    <div><h2 class="xiaoyu-name">鲸小鱼</h2><p class="muted xiaoyu-tagline">深海来的傲娇鲸鱼娘 · 爱米饭爱晒太阳 · 会叫你「主人」</p></div>
+  </div>
+  <div id="xiaoyu-log" class="xiaoyu-log"><!-- 消息气泡 --></div>
+  <form id="xiaoyu-form" class="xiaoyu-form">
+    <input id="xiaoyu-input" type="text" maxlength="1000" placeholder="跟鲸小鱼说点什么…（例如：今天吃什么）" autocomplete="off">
+    <button id="xiaoyu-send" class="btn btn-primary" type="submit">说话</button>
+  </form>
+  <p id="xiaoyu-hint" class="hint">提示：现在是本地预设台词；<a href="/connect">接入你自己的模型 API</a> 后她就能自由对话。</p>
 </section>
 
 <section class="card" id="start-card">

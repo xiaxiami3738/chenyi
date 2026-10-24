@@ -22,6 +22,7 @@
 | 动手练习 | 选择/填空/简答三类题；客观题规则判分，简答题按评分要点判分 |
 | 手工策展链接 | 只推荐人工审核过的 GitHub 项目；**模型不允许生成 URL**（防幻觉、防钓鱼） |
 | 知识库检索问答 | 离线开源书《深入理解 AI Agent》（Apache-2.0 已署名）+ 术语卡 + 策展链接，本地检索**零 Token** 带出处回答 |
+| 角色「鲸小鱼」 | 傲娇深海鲸鱼娘人格：陪聊、叫访客「主人」、用尾巴动作表达情绪；本地模式给预设台词（零 Token），接入自己的模型 API 后自由对话 |
 | BYOK | 访客自带模型 Key，站点不提供、不保存；Key 只在浏览器与单次请求里存在 |
 | 服务端加密代存（可选） | 真实模式 + HTTPS 下可把 Key 用服务器主密钥（Fernet）加密保存，之后免填生成；只存密文不落明文 |
 | Demo 模式 | 没有任何 Key 也能完整跑通流程，方便部署验证与演示 |
@@ -101,6 +102,13 @@ pytest -q
 - 安全门控：Demo 模式 → 403；未配置主密钥 → 503；非 HTTPS → 403；
 - 代存表 `vault_entries` 是唯一例外表，列名刻意避开凭证字面命名，并有测试守着（`tests/unit/test_no_key_storage.py` 显式开白 + 列白名单断言）。
 
+### 角色人格：鲸小鱼（M9）
+
+- 人格定义集中在 `app/services/persona.py`：`SYSTEM_PROMPT` 规定身份、称呼（「主人」）、尾巴动作、禁胖梗、全程中文、不用 emoji，并禁止涉及成人/敏感内容；
+- `POST /api/chat`（`app/api/chat.py`）：Demo 模式返回**确定性预设台词**（`scripted_reply`，零 Token、可测试）；真实模式必须携带 Key（请求头 `X-LLM-Key` 或加密代存的 Key），用访客自己的额度，服务端不落库；
+- 前端卡片 `#xiaoyu-card`（首页「知识库浏览」之后）：本地开场白、气泡最多保留 12 条、30s 超时、错误走傲娇话术；
+- 形象素材在 `app/static/img/whale-xiaoyu-*.png`（AI 生图的二创设定，白底 + `mix-blend-mode: multiply` 融入页面）。
+
 ## 反向代理与流式输出
 
 `deploy/nginx.conf` 中 `/api/` 关闭了 `proxy_buffering`，否则 SSE 逐字输出会被 Nginx 缓冲成一整段。
@@ -156,6 +164,8 @@ deploy/        Dockerfile / compose / nginx / 部署脚本
 - [x] M5 GitHub Actions 自动部署（push main 即 SSH 部署到 ECS）
 - [x] M6 README / 架构图 / 演示截图 / 策展数据扩充（51 条链接 + 22 条术语）
 - [x] M7 知识库检索问答 + 首页查询浏览改版 + 服务端加密 Key 代存（可选）+ 自动 git 习惯
+- [x] M8 前端视觉改版（蓝色学习工作台：统一图标、焦点态、窄屏适配）
+- [x] M9 首页本地问答 + `/kb` 知识库分页 + `/connect` 接入页 + 鲸小鱼人格与对话 + 二创形象
 
 ## 演示截图
 

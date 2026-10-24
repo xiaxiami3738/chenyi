@@ -33,6 +33,7 @@ def healthz(request: Request) -> dict:
             "curated_links": True,
             "anonymous_client_id": True,
             "kb": True,
+            "chat": True,
             "vault": vault_available(settings),
         },
     }

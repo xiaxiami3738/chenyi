@@ -836,3 +836,151 @@ textarea { resize: vertical; }
     animation-duration: .01ms !important;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   鲸小鱼对话卡片（首页 #xiaoyu-card）
+   · 强调色仍只有品牌蓝：顶部淡蓝渐变 + 白底卡片，不再叠第二种强调色
+   · 情绪靠文字与「（尾巴…）」动作描写，界面不使用 emoji
+   ════════════════════════════════════════════════════════════════ */
+.xiaoyu-card {
+  background: linear-gradient(180deg, var(--primary-soft), var(--card));
+  border-color: var(--primary-line);
+}
+
+/* 头部：头像 + 名字/一句话人设 */
+.xiaoyu-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.xiaoyu-head > div { min-width: 0; }
+.xiaoyu-avatar {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--primary-line);
+  object-fit: cover;
+  box-shadow: var(--shadow-1);
+}
+.xiaoyu-head h2.xiaoyu-name {
+  margin: 0 0 2px;
+  font-size: 19px;
+  letter-spacing: -.01em;
+}
+.xiaoyu-tagline {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+/* 消息区：最高 320px，超出滚动 */
+.xiaoyu-log {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px;
+  margin-bottom: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-1);
+}
+
+/* 一条消息：默认鲸小鱼（左），.is-user 右对齐 */
+.xiaoyu-msg { display: flex; align-items: flex-end; gap: 9px; }
+.xiaoyu-msg.is-user { justify-content: flex-end; }
+/* 气泡限宽 78%：放在列容器上，避免短句被二次缩窄 */
+.xiaoyu-msg-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 78%;
+  min-width: 0;
+}
+.xiaoyu-msg-avatar {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 11px;
+  overflow: hidden;
+  background: var(--primary-soft);
+  border: 1px solid var(--primary-line);
+}
+.xiaoyu-msg-avatar-img {
+  display: block;
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+}
+.xiaoyu-bubble {
+  max-width: 100%;
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14.5px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.xiaoyu-msg.is-bot .xiaoyu-bubble { border-top-left-radius: var(--radius-sm); }
+.xiaoyu-msg.is-user .xiaoyu-bubble {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  border-top-right-radius: var(--radius-sm);
+}
+.xiaoyu-scripted {
+  margin: 0;
+  padding-left: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+/* 缺 Key 时的「去接入」链接：挑一处，不抢气泡的注意力 */
+.xiaoyu-link {
+  align-self: flex-start;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+.xiaoyu-link:hover { text-decoration: underline; }
+
+/* 输入行：输入框 + 说话按钮，窄屏竖排 */
+.xiaoyu-form { display: flex; align-items: stretch; gap: 9px; }
+.xiaoyu-form input {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--card);
+}
+/* 输入框 focus 沿用站内全局 input:focus 规则（蓝边 + 3px 光晕），不重复定义 */
+.xiaoyu-form .btn {
+  flex-shrink: 0;
+  padding: 0 22px;
+  border-radius: var(--radius);
+}
+
+.xiaoyu-card .hint { margin-top: 10px; }
+.xiaoyu-card .hint a { color: var(--primary); font-weight: 600; text-decoration: none; }
+.xiaoyu-card .hint a:hover { text-decoration: underline; }
+
+@media (max-width: 680px) {
+  .xiaoyu-card { padding: 18px 16px; }
+  .xiaoyu-head { gap: 11px; }
+  .xiaoyu-avatar { width: 46px; height: 46px; border-radius: 12px; }
+  .xiaoyu-log { max-height: 300px; padding: 12px; }
+  .xiaoyu-msg-main { max-width: 82%; }
+  .xiaoyu-form { flex-direction: column; }
+  .xiaoyu-form .btn { padding: 12px 20px; }
+}

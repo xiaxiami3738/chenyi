@@ -447,7 +447,7 @@ function renderKbAnswer(data) {
   if (!data.total) {
     const empty = textEl("div", "kb-empty", "");
     const whale = document.createElement("img");
-    whale.src = "/static/img/whale-empty.png";
+    whale.src = "/static/img/whale-xiaoyu-empty.png";
     whale.alt = "";
     whale.setAttribute("aria-hidden", "true");
     empty.appendChild(whale);
@@ -955,3 +955,252 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+/* ── 鲸小鱼对话卡片（首页 #xiaoyu-card） ─────────────────────────
+   深海鲸鱼娘「鲸小鱼」的角色对话：本地开场白 + POST /api/chat。
+   · 所有文本用 textContent 写入，不做 innerHTML 拼接
+   · 子页面没有 #xiaoyu-form 时整体跳过
+   · mode=demo / scripted=true 时在气泡下方标注「预设台词」 */
+
+const XIAOYU_OPENING = "哼，主人终于来了。（尾巴慢悠悠拍了一下）先说好，我才不是特意等你的。";
+const XIAOYU_SCRIPTED_NOTE = "预设台词 · 接入 API 后可自由对话";
+const XIAOYU_LIVE_NOTE = "已接入你的模型";
+const XIAOYU_MAX_BUBBLES = 12;
+const XIAOYU_TIMEOUT_MS = 30000;
+let xiaoyuLiveNoted = false;
+
+function xiaoyuEl(id) {
+  return document.getElementById(id);
+}
+
+function xiaoyuGuardAvatar(img) {
+  // 头像由另一位同学产出，文件还没到位时保留底框、不显示破图
+  if (!img) return;
+  img.addEventListener("error", function () {
+    img.style.visibility = "hidden";
+  }, { once: true });
+}
+
+function xiaoyuScrollToBottom(log) {
+  if (!log) return;
+  log.scrollTop = log.scrollHeight;
+}
+
+function xiaoyuTrim(log) {
+  // 只保留最近 12 条气泡
+  while (log.children.length > XIAOYU_MAX_BUBBLES) {
+    log.removeChild(log.firstElementChild);
+  }
+}
+
+function xiaoyuAvatarNode() {
+  const holder = document.createElement("span");
+  holder.className = "xiaoyu-msg-avatar";
+  const img = document.createElement("img");
+  img.className = "xiaoyu-msg-avatar-img";
+  img.src = "/static/img/whale-xiaoyu-avatar.png";
+  img.alt = "";
+  img.width = 36;
+  img.height = 36;
+  xiaoyuGuardAvatar(img);
+  holder.appendChild(img);
+  return holder;
+}
+
+function xiaoyuAppendBubble(log, role, text, note, link) {
+  if (!log) return null;
+  const row = document.createElement("div");
+  row.className = "xiaoyu-msg " + (role === "user" ? "is-user" : "is-bot");
+  const main = document.createElement("div");
+  main.className = "xiaoyu-msg-main";
+  const bubble = document.createElement("div");
+  bubble.className = "xiaoyu-bubble";
+  bubble.textContent = text;
+  main.appendChild(bubble);
+  if (note) {
+    const tip = document.createElement("p");
+    tip.className = "xiaoyu-scripted";
+    tip.textContent = note;
+    main.appendChild(tip);
+  }
+  if (link) {
+    // 链接也用 createElement + textContent 组装，不拼 innerHTML
+    const a = document.createElement("a");
+    a.className = "xiaoyu-link";
+    a.href = link.href;
+    a.textContent = link.label;
+    main.appendChild(a);
+  }
+  if (role === "user") {
+    row.appendChild(main);
+  } else {
+    row.appendChild(xiaoyuAvatarNode());
+    row.appendChild(main);
+  }
+  log.appendChild(row);
+  xiaoyuTrim(log);
+  xiaoyuScrollToBottom(log);
+  return row;
+}
+
+function xiaoyuFieldValue(id) {
+  // 首页 BYOK 卡片里的可选字段：子页面没有元素时返回空串
+  const el = xiaoyuEl(id);
+  return el && typeof el.value === "string" ? el.value.trim() : "";
+}
+
+function xiaoyuSavedKeyChecked() {
+  // 复用「使用我已保存到服务器的 Key」勾选状态
+  if (typeof useSavedKeyChecked === "function") {
+    try {
+      return !!useSavedKeyChecked();
+    } catch (e) {
+      return false;
+    }
+  }
+  const el = xiaoyuEl("use-saved-key");
+  return !!(el && el.checked);
+}
+
+function xiaoyuErrorText(code, message) {
+  if (code === "rate_limited") {
+    return "主人说太快啦，等我喘口气（尾巴不满地拍水）";
+  }
+  if (message && message.trim()) return message.trim();
+  return "（她鼓了一下腮帮子）好像出了点小岔子，主人待会儿再跟我说一次？";
+}
+
+function xiaoyuSetBusy(on) {
+  const btn = xiaoyuEl("xiaoyu-send");
+  const input = xiaoyuEl("xiaoyu-input");
+  const form = xiaoyuEl("xiaoyu-form");
+  if (btn) {
+    btn.disabled = on;
+    btn.textContent = on ? "说话中…" : "说话";
+  }
+  if (input) input.disabled = on;
+  if (form) form.dataset.busy = on ? "1" : "";
+}
+
+function xiaoyuMarkLive() {
+  if (xiaoyuLiveNoted) return;
+  xiaoyuLiveNoted = true;
+  const hint = xiaoyuEl("xiaoyu-hint");
+  if (hint) hint.textContent = XIAOYU_LIVE_NOTE + "：现在的回答来自你配置的模型 API。";
+}
+
+async function xiaoyuSend(message) {
+  const log = xiaoyuEl("xiaoyu-log");
+  const input = xiaoyuEl("xiaoyu-input");
+  if (!log) return;
+  xiaoyuSetBusy(true);
+  xiaoyuAppendBubble(log, "user", message, "");
+  if (input) input.value = "";
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), XIAOYU_TIMEOUT_MS);
+  try {
+    let clientId = "c_guest";
+    try {
+      if (typeof ensureClientId === "function") clientId = ensureClientId();
+    } catch (e) {
+      clientId = "c_guest";
+    }
+    const headers = { "Content-Type": "application/json" };
+    const useSavedKey = xiaoyuSavedKeyChecked();
+    if (!useSavedKey) {
+      // 未勾选代存：本机浏览器 Key 单次透传（与生成学习路径的做法一致）
+      const key = xiaoyuFieldValue("api-key");
+      if (key) headers["X-LLM-Key"] = key;
+    }
+    // 勾选代存时不发 X-LLM-Key，由服务端使用加密代存的 Key
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        client_id: clientId,
+        message: message,
+        provider_id: xiaoyuFieldValue("provider") || null,
+        base_url: xiaoyuFieldValue("base-url") || null,
+        model: xiaoyuFieldValue("model") || null,
+        use_saved_key: useSavedKey,
+      }),
+      signal: controller.signal,
+    });
+    let data = null;
+    try {
+      data = await res.json();
+    } catch (e) {
+      data = null;
+    }
+    if (!res.ok) {
+      const err = (data && data.error) || {};
+      let code = err.code || "";
+      if (!code && res.status === 429) code = "rate_limited";
+      if (!code && res.status === 400) code = "missing_key";
+      if (code === "missing_key") {
+        // 缺 Key：傲娇式提示 + 「去接入」链接
+        xiaoyuAppendBubble(
+          log,
+          "bot",
+          "哼，主人还没给我接上模型呢…（尾巴啪地拍了一下水）先把 Key 接上，我才能好好跟你说话。",
+          "",
+          { href: "/connect", label: "去接入自己的模型（/connect）" }
+        );
+        return;
+      }
+      xiaoyuAppendBubble(log, "bot", xiaoyuErrorText(code, err.message), "");
+      return;
+    }
+    const reply = (data && typeof data.reply === "string" && data.reply.trim())
+      ? data.reply.trim()
+      : "（她把头埋进水里憋了半天）主人，我刚才好像走神了…再说一遍？";
+    const scripted = !!(data && (data.scripted === true || data.mode === "demo"));
+    xiaoyuAppendBubble(log, "bot", reply, scripted ? XIAOYU_SCRIPTED_NOTE : "");
+    if (!scripted) xiaoyuMarkLive();
+  } catch (err) {
+    const aborted = err && (err.name === "AbortError" || err.name === "TimeoutError");
+    xiaoyuAppendBubble(
+      log,
+      "bot",
+      aborted
+        ? "……等这么久还没回音（尾巴烦躁地拍了两下水面），主人再叫我一次？"
+        : "（她甩了甩尾巴）网络好像闪了一下，主人再说一遍好不好？",
+      ""
+    );
+  } finally {
+    clearTimeout(timer);
+    xiaoyuSetBusy(false);
+  }
+}
+
+function xiaoyuInit() {
+  const form = xiaoyuEl("xiaoyu-form");
+  const log = xiaoyuEl("xiaoyu-log");
+  const input = xiaoyuEl("xiaoyu-input");
+  const send = xiaoyuEl("xiaoyu-send");
+  if (!form || !log || !input || !send) return; // 子页面没有这张卡片：直接跳过
+
+  xiaoyuGuardAvatar(document.querySelector("#xiaoyu-card .xiaoyu-avatar"));
+  if (!log.children.length) {
+    // 本地开场白，不请求接口
+    xiaoyuAppendBubble(log, "bot", XIAOYU_OPENING, "");
+  }
+
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault(); // Enter 与点按钮都走这里
+    if (form.dataset.busy === "1") return;
+    const text = input.value.trim();
+    if (!text) {
+      input.focus();
+      return;
+    }
+    xiaoyuSend(text.slice(0, 1000));
+  });
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", xiaoyuInit);
+} else {
+  xiaoyuInit();
+}
