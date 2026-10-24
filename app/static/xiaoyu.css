@@ -19,18 +19,7 @@
 #xiaoyu-card .xiaoyu-head {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-#xiaoyu-card .xiaoyu-avatar {
-  flex: 0 0 44px;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  object-fit: cover;
-  background: var(--primary-soft);
-  border: 0;
-  box-shadow: none;
+  gap: 10px;
 }
 
 #xiaoyu-card .xiaoyu-id {
@@ -48,13 +37,6 @@
   line-height: 1.3;
   letter-spacing: 0;
   color: var(--text);
-}
-
-#xiaoyu-card .xiaoyu-tagline {
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--muted);
 }
 
 #xiaoyu-card .xiaoyu-state {
@@ -102,23 +84,6 @@
   min-width: 0;
 }
 
-#xiaoyu-card .xiaoyu-msg-avatar {
-  flex: 0 0 26px;
-  width: 26px;
-  height: 26px;
-  margin-top: 3px;
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--primary-soft);
-}
-
-#xiaoyu-card .xiaoyu-msg-avatar-img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 #xiaoyu-card .xiaoyu-msg-main {
   display: flex;
   flex-direction: column;
@@ -147,10 +112,6 @@
 
 #xiaoyu-card .xiaoyu-msg.is-user .xiaoyu-msg-main {
   align-items: flex-end;
-}
-
-#xiaoyu-card .xiaoyu-msg.is-user .xiaoyu-msg-avatar {
-  display: none;
 }
 
 #xiaoyu-card .xiaoyu-msg.is-user .xiaoyu-bubble {
@@ -183,30 +144,15 @@
 
 /* ── 锁定态：虚线提示框替代输入行，别让卡片显得空 ───────────── */
 #xiaoyu-card .xiaoyu-locked {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  min-height: 90px;
-  margin-top: 16px;
-  padding: 16px 18px;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--radius);
-  background: #f8fafd;
-}
-
-#xiaoyu-card .xiaoyu-locked-text {
-  margin: 0;
-  max-width: 46ch;
+  margin: 12px 0 0;
   font-size: 13.5px;
-  line-height: 1.65;
+  line-height: 1.7;
   color: var(--muted);
 }
 
+
+
 #xiaoyu-card .xiaoyu-locked a {
-  flex: 0 0 auto;
-  padding: 6px 12px;
-  font-size: 12.5px;
   white-space: nowrap;
 }
 
@@ -223,11 +169,19 @@
 }
 
 #xiaoyu-card[data-state="locked"] .xiaoyu-form {
-  display: none;
+  display: flex;
 }
 
 #xiaoyu-card[data-state="ready"] .xiaoyu-locked {
   display: none;
+}
+
+/* 禁用态输入行：虚线边框 + 灰字，明确「还没接通」 */
+#xiaoyu-card #xiaoyu-form input:disabled {
+  background: #f8fafd;
+  border-style: dashed;
+  color: var(--muted);
+  cursor: not-allowed;
 }
 
 #xiaoyu-card #xiaoyu-form input {
@@ -262,8 +216,12 @@
   box-shadow: none;
 }
 
+/* 未接通时发送键要一眼看出「按不了」：中性灰填充，不用品牌蓝 */
 #xiaoyu-card #xiaoyu-form button:disabled {
-  opacity: .55;
+  background: var(--line);
+  border: 1px solid var(--line-strong);
+  color: var(--muted);
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -280,14 +238,7 @@
     padding: 16px;
   }
 
-  #xiaoyu-card .xiaoyu-avatar {
-    flex-basis: 40px;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-  }
-
-  #xiaoyu-card .xiaoyu-msg-main {
+    #xiaoyu-card .xiaoyu-msg-main {
     max-width: 86%;
   }
 
@@ -295,13 +246,6 @@
     max-height: 240px;
   }
 
-  #xiaoyu-card .xiaoyu-locked {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-    min-height: 0;
-    padding: 14px;
-  }
 
   #xiaoyu-card .xiaoyu-locked-text {
     max-width: none;

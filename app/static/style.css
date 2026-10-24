@@ -301,8 +301,21 @@ body {
   color: var(--muted);
 }
 .kb-mode strong { color: var(--text-2); }
-.kb-mode a { color: var(--primary); font-weight: 600; text-decoration: none; }
-.kb-mode a:hover { text-decoration: underline; }
+.kb-mode a { color: var(--text); font-weight: 700; text-decoration: none; }
+.kb-mode a:hover { transform: scale(1.06); }
+
+/* 正文里的行内跳转：黑字加粗、去掉蓝色下划线，悬停轻微放大 */
+a.text-link {
+  display: inline-block;
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform .15s ease;
+}
+a.text-link:hover,
+a.text-link:focus-visible {
+  transform: scale(1.06);
+}
 .kb-mode-tag {
   display: inline-block;
   margin-right: 8px;

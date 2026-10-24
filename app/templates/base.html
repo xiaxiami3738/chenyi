@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}AI 开发入门向导{% endblock %}</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style.css?v={{version}}">
   {% block head %}{% endblock %}
 </head>
 <body>
@@ -60,7 +60,7 @@
     <!-- 备案号占位：取得备案后在此悬挂并链接 https://beian.miit.gov.cn/ -->
   </footer>
 
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v={{version}}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

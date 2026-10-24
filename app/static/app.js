@@ -841,14 +841,6 @@ function xiaoyuEl(id) {
   return document.getElementById(id);
 }
 
-function xiaoyuGuardAvatar(img) {
-  // 头像由另一位同学产出，文件还没到位时保留底框、不显示破图
-  if (!img) return;
-  img.addEventListener("error", function () {
-    img.style.visibility = "hidden";
-  }, { once: true });
-}
-
 function xiaoyuScrollToBottom(log) {
   if (!log) return;
   log.scrollTop = log.scrollHeight;
@@ -859,20 +851,6 @@ function xiaoyuTrim(log) {
   while (log.children.length > XIAOYU_MAX_BUBBLES) {
     log.removeChild(log.firstElementChild);
   }
-}
-
-function xiaoyuAvatarNode() {
-  const holder = document.createElement("span");
-  holder.className = "xiaoyu-msg-avatar";
-  const img = document.createElement("img");
-  img.className = "xiaoyu-msg-avatar-img";
-  img.src = "/static/img/whale-xiaoyu-avatar.png";
-  img.alt = "";
-  img.width = 36;
-  img.height = 36;
-  xiaoyuGuardAvatar(img);
-  holder.appendChild(img);
-  return holder;
 }
 
 function xiaoyuAppendBubble(log, role, text, note, link) {
@@ -899,12 +877,7 @@ function xiaoyuAppendBubble(log, role, text, note, link) {
     a.textContent = link.label;
     main.appendChild(a);
   }
-  if (role === "user") {
-    row.appendChild(main);
-  } else {
-    row.appendChild(xiaoyuAvatarNode());
-    row.appendChild(main);
-  }
+  row.appendChild(main);
   log.appendChild(row);
   xiaoyuTrim(log);
   xiaoyuScrollToBottom(log);
@@ -1037,10 +1010,21 @@ function applyXiaoyuGate(access) {
   const log = xiaoyuEl("xiaoyu-log");
   if (!card || !form || !locked) return;
 
+  const input = xiaoyuEl("xiaoyu-input");
+  const send = xiaoyuEl("xiaoyu-send");
+
   if (access.ready) {
     card.dataset.state = "ready";
     form.hidden = false;
     locked.hidden = true;
+    if (input) {
+      input.disabled = false;
+      input.placeholder = "跟鲸小鱼说点什么…";
+    }
+    if (send) {
+      send.disabled = false;
+      send.textContent = "发送";
+    }
     if (badge) badge.textContent = access.useSavedKey ? "已连接 · 代存" : "已连接";
     if (log && !log.children.length) {
       // 本地开场白，不请求接口
@@ -1049,9 +1033,19 @@ function applyXiaoyuGate(access) {
     return;
   }
 
+  // 未接入：输入行照常显示，但禁用、不能发送
   card.dataset.state = "locked";
-  form.hidden = true;
+  form.hidden = false;
   locked.hidden = false;
+  if (input) {
+    input.disabled = true;
+    input.value = "";
+    input.placeholder = "接入 API 后就能和鲸小鱼说话…";
+  }
+  if (send) {
+    send.disabled = true;
+    send.textContent = "发送";
+  }
   if (badge) badge.textContent = "未接入";
   if (log) log.textContent = "";
 }
@@ -1063,7 +1057,6 @@ function xiaoyuInit() {
   const send = xiaoyuEl("xiaoyu-send");
   if (!form || !log || !input || !send) return; // 子页面没有这张卡片：直接跳过
 
-  xiaoyuGuardAvatar(document.querySelector("#xiaoyu-card .xiaoyu-avatar"));
   applyXiaoyuGate(modelAccess());
 
   form.addEventListener("submit", function (ev) {
