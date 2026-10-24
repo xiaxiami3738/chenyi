@@ -47,7 +47,9 @@ def test_index_has_local_search_mode_hint(client: TestClient) -> None:
     assert 'id="kb-mode"' in html
     assert "本地检索" in html
     assert 'href="/connect"' in html
-    assert "hero-mascot" in html
+    # 小立绘挪到搜索框右侧（.kb-mascot），不再是 hero 顶部的大图
+    assert "kb-mascot" in html
+    assert "whale-xiaoyu-search.png" in html
 
 
 def test_kb_and_connect_pages_render(client: TestClient) -> None:

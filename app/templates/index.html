@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="hero">
-  <img class="hero-mascot" src="/static/img/whale-xiaoyu-hero.png" alt="" aria-hidden="true" loading="lazy">
   <h1>让普通人快速接手 AI 开发</h1>
   <p class="lead">
     想先弄清楚一个概念？直接在上面的知识库搜索框里提问，<strong>零费用</strong>获得带出处的回答。
@@ -41,6 +40,7 @@
     </svg>
   </div>
 
+  <div class="kb-search-wrap">
   <form id="kb-form" class="kb-search" role="search">
     <span class="search-icon" aria-hidden="true">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -53,6 +53,8 @@
       aria-label="搜索知识库">
     <button type="submit" class="btn btn-primary" id="kb-btn">搜索</button>
   </form>
+  <img class="kb-mascot" src="/static/img/whale-xiaoyu-search.png" alt="" aria-hidden="true" loading="lazy">
+  </div>
   <p class="hint" id="kb-hint">本地知识库即时检索 · 不消耗任何模型额度 · 结果带出处可核对</p>
   <p class="kb-mode" id="kb-mode">
     <span class="kb-mode-tag">本地检索</span>

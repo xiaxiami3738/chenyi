@@ -369,21 +369,33 @@ body {
 
 /* ── 首屏点缀：DSH 鲸鱼娘（装饰性，不参与读屏） ─────────────── */
 .hero { position: relative; }
-.hero-mascot {
+/* 搜索框右侧的小立绘：浅蓝白虚化底图用径向遮罩柔化边缘，像一枚贴纸 */
+.kb-search-wrap {
+  position: relative;
+  max-width: 640px;
+  margin: 26px auto 0;
+}
+.kb-search-wrap .kb-search {
+  margin: 0;
+  max-width: none;
+}
+.kb-mascot {
   position: absolute;
-  right: -18px;
-  top: 6px;
-  width: 190px;
+  left: calc(100% + 20px);
+  bottom: -2px;
+  width: 128px;
   height: auto;
   pointer-events: none;
-  mix-blend-mode: multiply;
   user-select: none;
+  border-radius: 16px;
+  -webkit-mask-image: radial-gradient(circle at 50% 46%, #000 58%, transparent 76%);
+  mask-image: radial-gradient(circle at 50% 46%, #000 58%, transparent 76%);
 }
-@media (max-width: 1080px) {
-  .hero-mascot { width: 132px; right: 0; top: -6px; opacity: .92; }
+@media (max-width: 1120px) {
+  .kb-mascot { width: 112px; left: calc(100% + 12px); }
 }
-@media (max-width: 680px) {
-  .hero-mascot { display: none; }
+@media (max-width: 900px) {
+  .kb-mascot { display: none; }
 }
 
 /* 极淡的浪花/鲸尾底纹：只做氛围，不影响文字可读性 */
