@@ -10,9 +10,17 @@
 </section>
 
 <section class="card">
-  <div class="actions" style="justify-content: space-between;">
-    <h2 style="margin: 0;">历史会话</h2>
-    <button type="button" class="btn" id="history-refresh">🔄 刷新</button>
+  <div class="actions history-head">
+    <h2>
+      <span class="heading-icon" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 7v5l3 2"/>
+        </svg>
+      </span>
+      历史会话
+    </h2>
+    <button type="button" class="btn" id="history-refresh">刷新</button>
   </div>
   <p id="history-empty" class="muted" hidden>
     还没有生成过学习路径，去<a href="/">首页</a>生成一个吧。
@@ -21,7 +29,15 @@
 </section>
 
 <section class="card" id="history-detail" hidden>
-  <h2>会话详情</h2>
+  <h2>
+    <span class="heading-icon" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <path d="M14 2v6h6M9 13h6M9 17h6"/>
+      </svg>
+    </span>
+    会话详情
+  </h2>
   <div id="detail-root"></div>
 </section>
 {% endblock %}

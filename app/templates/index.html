@@ -6,7 +6,47 @@
     想先弄清楚一个概念？直接在上面的知识库搜索框里提问，<strong>零费用</strong>获得带出处的回答。
     这里有 AI 开发入门必学的主题、章节和名词卡，也随时可以生成一条属于你的学习路径。
   </p>
+
+  <div class="hero-diagram" role="img" aria-label="学习闭环路线图：诊断 → 学习路径 → 名词讲解 → 动手练习 → 复盘报告">
+    <svg viewBox="0 0 640 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="route-line" x1="0" y1="0" x2="640" y2="0" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#2563eb" stop-opacity=".25"/>
+          <stop offset=".5" stop-color="#2563eb" stop-opacity=".6"/>
+          <stop offset="1" stop-color="#2563eb" stop-opacity=".25"/>
+        </linearGradient>
+      </defs>
+      <path d="M38 32 H602" stroke="url(#route-line)" stroke-width="2" stroke-dasharray="3 5"/>
+      <!-- 诊断 -->
+      <circle cx="38" cy="32" r="15" fill="#eff5ff" stroke="#2563eb" stroke-width="2"/>
+      <path d="M31 32h14M38 25v14" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+      <text x="38" y="59" text-anchor="middle" font-size="11" fill="#5b6472">诊断</text>
+      <!-- 学习路径 -->
+      <circle cx="175" cy="32" r="15" fill="#eff5ff" stroke="#2563eb" stroke-width="2"/>
+      <path d="M168 32h14M175 25v14" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+      <text x="175" y="59" text-anchor="middle" font-size="11" fill="#5b6472">学习路径</text>
+      <!-- 名词讲解 -->
+      <circle cx="312" cy="32" r="15" fill="#eff5ff" stroke="#2563eb" stroke-width="2"/>
+      <path d="M305 32h14M312 25v14" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+      <text x="312" y="59" text-anchor="middle" font-size="11" fill="#5b6472">名词讲解</text>
+      <!-- 动手练习 -->
+      <circle cx="449" cy="32" r="15" fill="#eff5ff" stroke="#2563eb" stroke-width="2"/>
+      <path d="M442 32h14M449 25v14" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+      <text x="449" y="59" text-anchor="middle" font-size="11" fill="#5b6472">动手练习</text>
+      <!-- 复盘报告 -->
+      <circle cx="586" cy="32" r="15" fill="#2563eb"/>
+      <path d="M581 32h10M586 27v10" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      <text x="586" y="59" text-anchor="middle" font-size="11" fill="#334155" font-weight="600">复盘报告</text>
+    </svg>
+  </div>
+
   <form id="kb-form" class="kb-search" role="search">
+    <span class="search-icon" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"/>
+        <path d="m20 20-3.5-3.5"/>
+      </svg>
+    </span>
     <input id="kb-input" type="search" autocomplete="off" maxlength="200"
       placeholder="例如：什么是 Agent？RAG 是什么？提示工程怎么入门？"
       aria-label="搜索知识库">
@@ -17,7 +57,15 @@
 </section>
 
 <section class="card" id="browse-card">
-  <h2>📚 知识库浏览</h2>
+  <h2>
+    <span class="heading-icon" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13z"/>
+        <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/>
+      </svg>
+    </span>
+    知识库浏览
+  </h2>
   <p class="muted">
     想要系统了解 AI 开发？从下面这些主题和章节开始。内容来自开源书《深入理解 AI Agent》
     <a href="https://github.com/bojieli/ai-agent-book" rel="noopener noreferrer" target="_blank">（Apache-2.0，已署名）</a>。
@@ -27,7 +75,16 @@
 </section>
 
 <section class="card" id="start-card">
-  <h2>🎯 想生成一条属于你的学习路径？</h2>
+  <h2>
+    <span class="heading-icon" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/>
+        <circle cx="12" cy="12" r="5"/>
+        <circle cx="12" cy="12" r="1.2" fill="currentColor"/>
+      </svg>
+    </span>
+    想生成一条属于你的学习路径？
+  </h2>
   <p class="muted">告诉我你的目标、水平和每天能投入的时间，向导会带你走完一圈：</p>
   <p class="muted">
     <strong>诊断 → 学习路径 → 名词讲解 → 动手练习 → 复盘报告</strong>，
@@ -79,20 +136,30 @@
     <div id="gen-days" class="gen-days"></div>
     <div id="gen-links" class="result-block" hidden></div>
     <div id="gen-actions" class="result-block" hidden>
-      <button type="button" class="btn btn-primary" id="download-md">📥 下载 Markdown</button>
-      <a class="btn btn-ghost" href="/history">📋 查看历史</a>
+      <button type="button" class="btn btn-primary" id="download-md">下载 Markdown</button>
+      <a class="btn btn-ghost" href="/history">查看历史</a>
     </div>
   </div>
 </section>
 
 <section class="card" id="byok-card">
-  <h2>🔑 用哪个模型（自带 Key）</h2>
+  <h2>
+    <span class="heading-icon" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="8" cy="15" r="4"/>
+        <path d="M10.85 12.15 19 4"/>
+        <path d="M18 5l2 2"/>
+        <path d="M15 8l2 2"/>
+      </svg>
+    </span>
+    用哪个模型（自带 Key）
+  </h2>
   <p class="muted">
     知识库问答<strong>不需要任何 Key</strong>。只有想生成个性化学习路径时才需要模型 Key：
     你填的 Key 只存在<strong>你自己的浏览器</strong>里，每次生成时随请求头单次透传，服务端不落库、不写日志。
   </p>
   <div id="insecure-warning" class="warning" hidden>
-    ⚠️ 当前页面不是 HTTPS，填入真实 Key 存在被中间人截获的风险。建议只在 Demo 模式体验，或改用 HTTPS 部署。
+    当前页面不是 HTTPS，填入真实 Key 存在被中间人截获的风险。建议只在 Demo 模式体验，或改用 HTTPS 部署。
   </div>
   <div class="form-grid">
     <label class="field">
@@ -119,7 +186,7 @@
   </div>
 
   <div id="vault-block" class="vault-block">
-    <h3>🔐 服务端加密代存（可选）</h3>
+    <h3>服务端加密代存（可选）</h3>
     <p class="muted">
       不想每次填 Key？可以把 Key 加密保存到本站服务器，之后生成时勾选
       「使用我已保存到服务器的 Key」即可免填。保存后才会调用你自己的模型接口来回答；
@@ -135,7 +202,16 @@
 </section>
 
 <section class="card" id="links-card">
-  <h2>🧰 先看别人怎么做的</h2>
+  <h2>
+    <span class="heading-icon" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18h6M10 22h4"/>
+        <path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.4 1 2.3h6c0-.9.4-1.8 1-2.3A7 7 0 0 0 12 2z"/>
+        <path d="M10 12h4M11 9h2"/>
+      </svg>
+    </span>
+    先看别人怎么做的
+  </h2>
   <p class="muted">下面这些链接来自项目里的人工策展清单（不是模型现编的 URL）。</p>
   <div id="topic-bar" class="topic-bar"></div>
   <div id="links-list" class="links"></div>

@@ -171,7 +171,7 @@ function setGenerating(on) {
 function showError(message) {
   const box = $("gen-error");
   box.hidden = false;
-  box.textContent = "⚠️ " + message;
+  box.textContent = message;
 }
 
 function clearOutput() {
@@ -230,7 +230,7 @@ function renderLesson(payload) {
 function renderTerm(payload) {
   const card = dayCard(payload.day);
   const term = textEl("div", "term-card", "");
-  term.appendChild(textEl("strong", "term-name", "📖 " + payload.term));
+  term.appendChild(textEl("strong", "term-name", payload.term));
   term.appendChild(textEl("div", "term-def", payload.definition));
   if (payload.analogy) term.appendChild(textEl("div", "term-analogy", "类比：" + payload.analogy));
   if (payload.pitfalls) term.appendChild(textEl("div", "term-pitfalls", "注意：" + payload.pitfalls));
@@ -240,7 +240,7 @@ function renderTerm(payload) {
 function renderQuiz(payload) {
   const card = dayCard(payload.day);
   const quiz = textEl("div", "quiz-card", "");
-  quiz.appendChild(textEl("div", "quiz-question", `✏️ ${payload.question}`));
+  quiz.appendChild(textEl("div", "quiz-question", payload.question));
   (payload.options || []).forEach((opt) => {
     quiz.appendChild(textEl("div", "quiz-option", "· " + opt));
   });
@@ -260,7 +260,7 @@ function renderQuiz(payload) {
 
 function renderDone(payload) {
   const done = textEl("div", "done-box", "");
-  done.appendChild(textEl("strong", "", "✅ 学习路径已生成完毕"));
+  done.appendChild(textEl("strong", "", "学习路径已生成完毕"));
   const stats = [
     `计划 ${payload.plan_count || 0} 天`,
     `讲义 ${payload.lesson_count || 0} 篇`,
@@ -274,7 +274,7 @@ function renderDone(payload) {
   if (links.length) {
     const box = $("gen-links");
     box.hidden = false;
-    box.appendChild(textEl("h3", "", "🗂 配套开源项目（人工策展）"));
+    box.appendChild(textEl("h3", "", "配套开源项目（人工策展）"));
     links.forEach((link) => {
       const item = textEl("div", "link-item", "");
       const a = document.createElement("a");
@@ -444,6 +444,7 @@ function renderKbResults(data) {
     const head = textEl("div", "kb-hit-head", "");
     const kind = document.createElement("span");
     kind.className = "kb-kind";
+    kind.dataset.kind = hit.kind; // M8：按 kind 给徽章上色（chapter/term/link）
     kind.textContent = KIND_LABEL[hit.kind] || hit.kind;
     const title = textEl("strong", "kb-hit-title", hit.title);
     head.appendChild(kind);
@@ -491,7 +492,7 @@ async function runKbSearch(query) {
     if (err.name === "AbortError") return; // 被新输入打断，忽略
     box.hidden = false;
     box.innerHTML = "";
-    box.appendChild(textEl("p", "muted", "⚠️ " + (err.message || "检索失败。")));
+    box.appendChild(textEl("p", "muted", err.message || "检索失败。"));
     $("kb-hint").textContent = "本地知识库即时检索 · 不消耗任何模型额度 · 结果带出处可核对";
   }
 }
@@ -526,6 +527,7 @@ function renderBrowse(data) {
     const chip = document.createElement("button");
     chip.type = "button";
     chip.className = "topic-chip";
+    chip.dataset.kind = kind; // M8：用 CSS 小圆点区分 名词卡/链接 主题
     chip.textContent = label;
     chip.addEventListener("click", () => {
       if (kind === "term") {
@@ -538,8 +540,8 @@ function renderBrowse(data) {
     });
     return chip;
   };
-  data.terms_topics.forEach((t) => topics.appendChild(makeTopicChip("📖 " + t, "term")));
-  data.links_topics.forEach((t) => topics.appendChild(makeTopicChip("🧰 " + t, "link")));
+  data.terms_topics.forEach((t) => topics.appendChild(makeTopicChip(t, "term")));
+  data.links_topics.forEach((t) => topics.appendChild(makeTopicChip(t, "link")));
 
   // 章节目录：<details> 折叠每个章节小节
   data.chapters.forEach((ch) => {
@@ -628,10 +630,10 @@ function renderVaultUI() {
     return;
   }
   if (!vaultState.https) {
-    status.textContent = "⚠️ 当前连接不是 HTTPS（前置条件），代存已禁用，请通过 https 访问本站。";
+    status.textContent = "当前连接不是 HTTPS（前置条件），代存已禁用，请通过 https 访问本站。";
     status.className = "hint warn-text";
   } else {
-    status.textContent = "✅ 代存可用：保存后才会调用你自己的模型接口来回答，之后生成时勾选上方选项即可免填。";
+    status.textContent = "代存可用：保存后才会调用你自己的模型接口来回答，之后生成时勾选上方选项即可免填。";
     status.className = "hint";
   }
   saveBtn.disabled = !vaultState.https;
@@ -670,10 +672,10 @@ async function saveVault() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error((data.error && data.error.message) || "保存失败。");
-    $("key-status").textContent = `✅ 已加密保存到服务器（${scope}）。保存后才会调用你自己的模型接口来回答。`;
+    $("key-status").textContent = `已加密保存到服务器（${scope}）。保存后才会调用你自己的模型接口来回答。`;
     await loadVaultState();
   } catch (err) {
-    $("key-status").textContent = "⚠️ " + err.message;
+    $("key-status").textContent = err.message;
   }
 }
 
@@ -686,10 +688,10 @@ async function clearVault(scope) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error((data.error && data.error.message) || "清除失败。");
-    $("key-status").textContent = `🗑 已清除服务器上「${scope}」的代存 Key。`;
+    $("key-status").textContent = `已清除服务器上「${scope}」的代存 Key。`;
     await loadVaultState();
   } catch (err) {
-    $("key-status").textContent = "⚠️ " + err.message;
+    $("key-status").textContent = err.message;
   }
 }
 
@@ -746,7 +748,7 @@ function sessionMarkdownBtn(sessionId, label) {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = "btn btn-ghost btn-small";
-  btn.textContent = label || "📥 下载 Markdown";
+  btn.textContent = label || "下载 Markdown";
   btn.addEventListener("click", (ev) => {
     ev.stopPropagation();
     currentSessionId = sessionId;
@@ -803,7 +805,7 @@ function renderHistoryDetail(summary) {
   root.appendChild(sessionMarkdownBtn(s.id));
   const links = summary.links || [];
   if (links.length) {
-    root.appendChild(textEl("h4", "detail-section", "🗂 配套开源项目（人工策展）"));
+    root.appendChild(textEl("h4", "detail-section", "配套开源项目（人工策展）"));
     links.forEach((link) => {
       const item = textEl("div", "link-item", "");
       const a = document.createElement("a");
