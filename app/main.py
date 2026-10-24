@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import mimetypes
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -92,6 +93,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(kb_router)
     app.include_router(vault_router)
     app.include_router(chat_router)
+    # WebP 不在 Python 内置 mimetypes 表里，显式注册，避免静态资源被当成 text/plain 返回
+    mimetypes.add_type("image/webp", ".webp")
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     templates = Jinja2Templates(directory=str(TEMPLATES_DIR))

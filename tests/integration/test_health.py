@@ -41,6 +41,14 @@ def test_static_assets_served(client: TestClient) -> None:
         assert response.status_code == 200
         assert response.content
 
+
+def test_webp_mascot_served_with_image_mime(client: TestClient) -> None:
+    """WebP 立绘必须带 image/webp，否则浏览器可能按 text/plain 拒绝渲染。"""
+    response = client.get("/static/img/whale-xiaoyu-search-q4.webp")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("image/webp")
+
+
 def test_index_has_local_search_mode_hint(client: TestClient) -> None:
     """首页要说明「未接入 API 时是本地检索」，并留出接入入口。"""
     html = client.get("/").text
