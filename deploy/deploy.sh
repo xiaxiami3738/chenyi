@@ -11,8 +11,17 @@ git fetch --all --prune
 git reset --hard origin/main
 
 echo "==> 准备数据目录（容器内以 uid 10001 运行，需要可写 SQLite）"
-mkdir -p data deploy/certs
+mkdir -p data deploy/certs deploy/certbot-www deploy/runtime
 chown -R 10001:10001 data
+
+echo "==> 选择 nginx 配置（证书存在则启用 HTTPS）"
+if [ -f deploy/certs/fullchain.pem ] && [ -f deploy/certs/privkey.pem ]; then
+    cp deploy/nginx-https.conf deploy/runtime/nginx.conf
+    echo "    已检测到证书 -> 使用 nginx-https.conf"
+else
+    cp deploy/nginx.conf deploy/runtime/nginx.conf
+    echo "    未检测到证书 -> 使用 nginx.conf（HTTP，待备案通过后签发证书）"
+fi
 
 echo "==> 重建并启动容器"
 cd deploy

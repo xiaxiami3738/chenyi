@@ -18,3 +18,8 @@ playwright-report/
 .playwright/
 *.png
 !docs/screenshots/*.png.pytest-out.txt
+
+# 部署运行时产物（证书、acme 校验目录、按证书选择生成的 nginx 配置）
+deploy/certs/
+deploy/certbot-www/
+deploy/runtime/

@@ -34,11 +34,28 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # 由 deploy.sh 按 certs 是否存在选择 HTTP / HTTPS 配置后复制到 runtime/
+      - ./runtime/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./certs:/etc/nginx/certs:ro
+      - ./certbot-www:/var/www/certbot:ro
     restart: unless-stopped
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
+
+  # Let's Encrypt 证书续期：每 12 小时检查一次，续期成功后容器内不重启 nginx，
+  # 由 deploy.sh / 手动 `docker compose exec nginx nginx -s reload` 生效。
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certs:/etc/letsencrypt
+      - ./certbot-www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done;'"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
