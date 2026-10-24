@@ -172,6 +172,14 @@
       return;
     }
 
+    // 结果计数：让访客一眼知道这次检索命中了多少条（与首页检索保持一致的措辞）
+    var head = createEl(
+      'p',
+      'muted kb-result-count',
+      '找到 ' + results.length + ' 条结果（按匹配度排序）'
+    );
+    resultsBox.appendChild(head);
+
     results.forEach(function (item) {
       resultsBox.appendChild(buildHit(item));
     });
