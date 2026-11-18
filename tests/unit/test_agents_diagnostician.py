@@ -73,6 +73,19 @@ class BadLLM:
         return "{ 坏的 JSON"
 
 
+class BadTwiceThenOK:
+    """前两次输出坏 JSON，第三次输出合法（验证最多重试 2 次）。"""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    async def chat(self, messages, *, json_mode=False, max_tokens=None) -> str:
+        self.calls += 1
+        if self.calls <= 2:
+            return '{"summary": 123}'  # 类型错误：summary 必须是字符串
+        return '{"summary": "ok", "focus": []}'
+
+
 def test_diagnostician_publishes_progress(client) -> None:
     """正常路径：产出诊断意见并发布 progress 事件（正文不入库）。"""
     session_id = _create_session(client)
@@ -98,7 +111,7 @@ def test_diagnostician_publishes_progress(client) -> None:
 
 
 def test_retry_recovers_from_bad_json(client) -> None:
-    """校验失败自动重试 1 次：第二次输出合法则成功。"""
+    """校验失败自动重试：第二次输出合法则成功。"""
     session_id = _create_session(client)
     db = client.app.state.session_factory()
     llm = FlakyLLM()
@@ -118,7 +131,7 @@ def test_retry_recovers_from_bad_json(client) -> None:
 
 
 def test_retry_exhausted_fails_step(client) -> None:
-    """连续两次坏输出：抛 OutputInvalidError，AgentRun 记 failed(invalid_output)。"""
+    """连续三次坏输出：抛 OutputInvalidError，AgentRun 记 failed(invalid_output)。"""
     session_id = _create_session(client)
     db = client.app.state.session_factory()
     llm = BadLLM()
@@ -133,13 +146,37 @@ def test_retry_exhausted_fails_step(client) -> None:
         with pytest.raises(OutputInvalidError) as exc_info:
             _run(run_agent(Diagnostician(goal="学会 RAG"), ctx))
         assert exc_info.value.error_code == "invalid_output"
-        assert llm.calls == 2
+        assert llm.calls == 3
         runs = list(db.scalars(select(AgentRun)))
         run = next(r for r in runs if r.step == "diagnose")
         assert run.status == "failed"
         assert run.error_code == "invalid_output"
     finally:
         db.close()
+
+
+def test_retry_twice_with_specific_error(client) -> None:
+    """最多重试 2 次；重试消息附带上次校验的具体问题（模型可据此修正）。"""
+    observed: list[list] = []
+
+    class WrappingLLM(BadTwiceThenOK):
+        async def chat(self, messages, *, json_mode=False, max_tokens=None) -> str:
+            observed.append(messages)
+            return await super().chat(messages, json_mode=json_mode, max_tokens=max_tokens)
+
+    llm = WrappingLLM()
+    result = _run(ask_llm_with_retry(llm, [], DiagnosisResult))
+    assert isinstance(result, DiagnosisResult)
+    assert result.summary == "ok"
+    assert llm.calls == 3
+    assert len(observed) == 3
+    # 第二次、第三次尝试都带「具体问题」（来自上次校验错误）
+    for messages in observed[1:]:
+        joined = "\n".join(m.content for m in messages)
+        assert "具体问题：模型输出不符合约定结构" in joined
+    # 尝试次数递增：1 次原始 + 2 次修正
+    assert len(observed[1]) == len(observed[0]) + 2
+    assert len(observed[2]) == len(observed[0]) + 2
 
 
 def test_ask_llm_with_retry_passes_hint_on_retry() -> None:

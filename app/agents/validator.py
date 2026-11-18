@@ -113,26 +113,41 @@ async def ask_llm_with_retry(
     messages: list[ChatMessage],
     model: type[_T],
 ) -> _T:
-    """调用 LLM 并解析；解析失败追加修正提示重试 1 次。
+    """调用 LLM 并解析；失败时带具体错误修正提示重试最多 2 次。
 
     每次调用都会附带``contract_hint(model)``字段结构说明：
     真实模型需要看到目标契约才能稳定输出（M14 实测修复：live 模式下
     deepseek 曾因不知道字段名而输出结构不符导致 invalid_output）；
     FakeLLM 按「任务标记」分发，对追加的提示文本无感。
 
+    重试修正提示会附上上次校验的具体问题（缺哪个字段 / 哪个枚举值非法），
+    模型据此修正，比泛泛的「输出不合法」成功率高得多。live 模式实测
+    （deepseek）存在枚举值偏差（如 kind=short_answer）等偶发，1 次重试
+    不够，最多重试 2 次（共 3 次尝试）。
+
     仍失败时抛 :class:`OutputInvalidError`（error_code="invalid_output"），
     由其调用的 run_agent 记录 failed 并中止整个会话。
     """
     hint = contract_hint(model)
     first_messages = [*messages, ChatMessage.user(hint)]
-    first_text = await llm.chat(first_messages, json_mode=True)
-    try:
-        return parse_struct(first_text, model)
-    except OutputInvalidError:
-        retry_messages = [
-            *first_messages,
-            ChatMessage.user(RETRY_HINT),
-            ChatMessage.user(hint),
-        ]
-        retry_text = await llm.chat(retry_messages, json_mode=True)
-        return parse_struct(retry_text, model)
+    last_error: OutputInvalidError | None = None
+    for attempt in range(3):
+        if attempt == 0:
+            attempt_messages = first_messages
+        else:
+            details = (last_error.message if last_error else "").strip()
+            if len(details) > 500:
+                details = details[:500] + "…"
+            fix = RETRY_HINT if not details else f"{RETRY_HINT}\n具体问题：{details}"
+            attempt_messages = [
+                *first_messages,
+                ChatMessage.user(fix),
+                ChatMessage.user(hint),
+            ]
+        text = await llm.chat(attempt_messages, json_mode=True)
+        try:
+            return parse_struct(text, model)
+        except OutputInvalidError as exc:
+            last_error = exc
+    assert last_error is not None
+    raise last_error

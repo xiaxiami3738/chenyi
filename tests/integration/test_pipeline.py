@@ -209,7 +209,7 @@ def test_strip_urls_cleans_all_fields(client: TestClient) -> None:
 
 
 def test_bad_llm_json_fails_session(client: TestClient) -> None:
-    """LLM 持续输出坏 JSON：重试 1 次后 AgentRun 记 failed + error_code，会话 failed。"""
+    """LLM 持续输出坏 JSON：重试 2 次后 AgentRun 记 failed + error_code，会话 failed。"""
 
     class BadJSONLLM:
         calls = 0
@@ -232,7 +232,7 @@ def test_bad_llm_json_fails_session(client: TestClient) -> None:
             )
         )
     assert exc_info.value.error_code == "invalid_output"
-    assert BadJSONLLM.calls == 2  # 首调失败后重试 1 次
+    assert BadJSONLLM.calls == 3  # 首调 + 重试 2 次（共 3 次尝试）
 
     assert collector.events[-1][0] == "error"
     assert collector.events[-1][1]["code"] == "invalid_output"
