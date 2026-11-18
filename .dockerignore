@@ -1,0 +1,27 @@
+# 隐私与体积（2026-11-18 审计补）：build context = 仓库根，
+# 以下内容严禁进入 Docker 构建上下文（尤其 .env / 交接文档 / 数据库）。
+.env
+.env.*
+!.env.example
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+data/*.db
+data/*.db-journal
+data/*.db-shm
+data/*.db-wal
+_交接文档.md
+deploy/certs/
+deploy/certbot-www/
+deploy/runtime/
+shots/
+.git
+.gitignore
+.pylibs/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+tests/
+docs/
