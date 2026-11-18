@@ -10,7 +10,7 @@ from sqlalchemy import select
 from app.agents.base import AgentContext, run_agent
 from app.agents.diagnostician import Diagnostician
 from app.agents.errors import OutputInvalidError
-from app.agents.validator import ask_llm_with_retry
+from app.agents.validator import CONTRACT_HEADING, RETRY_HINT, ask_llm_with_retry, contract_hint
 from app.llm.fake import FakeLLM
 from app.llm.schemas import DiagnosisResult
 from app.models.db import session_scope
@@ -142,7 +142,7 @@ def test_retry_exhausted_fails_step(client) -> None:
 
 
 def test_ask_llm_with_retry_passes_hint_on_retry() -> None:
-    """重试时消息列表会追加修正提示（不含任务标记，FakeLLM 仍可分发）。"""
+    """每次调用都附带契约结构提示；重试额外追加修正提示（都不含任务标记）。"""
 
     observed: list[list] = []
 
@@ -155,8 +155,27 @@ def test_ask_llm_with_retry_passes_hint_on_retry() -> None:
 
     _run(ask_llm_with_retry(RecordingLLM(), [], DiagnosisResult))
     assert len(observed) == 2
-    assert len(observed[1]) == len(observed[0]) + 1
+    # 首次 = 原消息 + 契约提示；重试 = 首次 + 修正提示 + 契约提示
+    assert len(observed[1]) == len(observed[0]) + 2
     assert "任务标记" not in observed[1][-1].content
+    # 契约提示在首末两次都出现，且包含必填字段名
+    for messages in observed:
+        joined = "\n".join(m.content for m in messages)
+        assert CONTRACT_HEADING in joined
+        assert '"summary"' in joined
+        assert '"focus"' in joined
+    # 重试修正提示也在
+    assert RETRY_HINT in observed[1][-2].content
+
+
+def test_contract_hint_shape() -> None:
+    """契约提示：字段名/类型/必填齐全，且不含干扰 FakeLLM 分发的标签式短语。"""
+    hint = contract_hint(DiagnosisResult)
+    assert hint.startswith(CONTRACT_HEADING)
+    assert '"summary"（string，必填）' in hint
+    assert '"focus"（array[string]，可选）' in hint
+    for tag in ("任务标记", "目标：", "主题：", "天数："):
+        assert tag not in hint
 
 async def asyncio_ok(value: int = 0) -> int:
     """同步 publish 占位：返回可 await 的协程。"""
