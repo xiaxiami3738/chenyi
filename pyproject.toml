@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "chenyi"
 version = "0.3.0"
@@ -11,6 +15,7 @@ dependencies = [
     "sqlalchemy==2.0.36",
     "pydantic==2.10.4",
     "httpx==0.28.1",
+    "cryptography==44.0.1",
 ]
 
 [project.optional-dependencies]
@@ -23,6 +28,9 @@ dev = [
 line-length = 100
 target-version = "py312"
 extend-exclude = ["data"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
