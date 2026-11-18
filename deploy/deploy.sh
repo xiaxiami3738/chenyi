@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# 服务器端部署脚本：在 /srv/chenyi 拉取最新 main，重建并重启容器，最后自检健康接口。
-# 用法（服务器上）：bash deploy/deploy.sh
+# 服务器端部署脚本：在 /srv/chenyi 拉取指定分支，重建并重启容器，最后自检健康接口。
+# 用法（服务器上）：bash deploy/deploy.sh [branch]   # 默认 main
 set -euo pipefail
 
 REPO_DIR="${REPO_DIR:-/srv/chenyi}"
 cd "$REPO_DIR"
 
-echo "==> 拉取最新代码"
+BRANCH="${1:-main}"
+echo "==> 拉取最新代码（分支：${BRANCH}）"
 git fetch --all --prune
-git reset --hard origin/main
+git reset --hard "origin/${BRANCH}"
 
 echo "==> 准备数据目录（容器内以 uid 10001 运行，需要可写 SQLite）"
 mkdir -p data deploy/certs deploy/certbot-www deploy/runtime

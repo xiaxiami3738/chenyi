@@ -1,9 +1,15 @@
 name: deploy
 
+# main push 自动部署；也支持手动选择任意分支部署（测试 dev 分支用）。
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 要部署到 ECS 的分支（默认 main）
+        required: false
+        default: main
 
 jobs:
   deploy:
@@ -16,4 +22,4 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            bash /srv/chenyi/deploy/deploy.sh
+            bash /srv/chenyi/deploy/deploy.sh "${{ github.event.inputs.branch || 'main' }}"
