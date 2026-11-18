@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 
 import pytest
 from sqlalchemy import select
@@ -12,7 +13,7 @@ from app.agents.diagnostician import Diagnostician
 from app.agents.errors import OutputInvalidError
 from app.agents.validator import CONTRACT_HEADING, RETRY_HINT, ask_llm_with_retry, contract_hint
 from app.llm.fake import FakeLLM
-from app.llm.schemas import DiagnosisResult
+from app.llm.schemas import DiagnosisResult, PlanResult
 from app.models.db import session_scope
 from app.models.tables import AgentRun, LearnSession
 
@@ -169,13 +170,32 @@ def test_ask_llm_with_retry_passes_hint_on_retry() -> None:
 
 
 def test_contract_hint_shape() -> None:
-    """契约提示：字段名/类型/必填齐全，且不含干扰 FakeLLM 分发的标签式短语。"""
+    """契约提示：字段名/类型/必填齐全 + 样例 JSON，且不含干扰 FakeLLM 的标签短语。"""
     hint = contract_hint(DiagnosisResult)
     assert hint.startswith(CONTRACT_HEADING)
     assert '"summary"（string，必填）' in hint
     assert '"focus"（array[string]，可选）' in hint
+    # 样例：JSON 可解析、key 为英文、无中文冒号标签
+    assert "参考格式（照此结构输出即可）：" in hint
+    sample = hint.split("参考格式（照此结构输出即可）：", 1)[1].strip()
+    parsed = json.loads(sample)
+    assert parsed["summary"] == "示例文本"
+    assert parsed["focus"] == ["示例文本"]
     for tag in ("任务标记", "目标：", "主题：", "天数："):
         assert tag not in hint
+
+
+def test_contract_hint_plan_result_sample() -> None:
+    """嵌套结构（PlanResult）的样例生成：days 数组含完整 PlanDay 字段。"""
+    hint = contract_hint(PlanResult)
+    sample = json.loads(hint.split("参考格式（照此结构输出即可）：", 1)[1].strip())
+    day = sample["days"][0]
+    assert day == {
+        "day_index": 1,
+        "topic": "示例文本",
+        "objective": "示例文本",
+        "deliverable": "示例文本",
+    }
 
 async def asyncio_ok(value: int = 0) -> int:
     """同步 publish 占位：返回可 await 的协程。"""

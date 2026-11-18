@@ -31,13 +31,46 @@ RETRY_HINT = (
 
 #: 契约提示的开头。真实模型需要知道目标字段结构才能稳定输出；
 #: 固定字段名散列便于测试断言与日志排查。
-CONTRACT_HEADING = "输出 JSON 只能包含以下字段，字段名必须与列表完全一致："
+CONTRACT_HEADING = (
+    "输出 JSON 只能包含以下字段，字段名必须与列表完全一致；"
+    "key 一律使用英文，不得使用中文 key："
+)
+
+
+def _example_value(schema: dict, defs: dict | None = None) -> object:
+    """由 JSON Schema 递归生成一个样例值（只用于提示词，不涉及任何真实数据）。
+
+    嵌套模型在 schema 里以 ``$ref`` 出现（如 ``#/$defs/PlanDay``），
+    需要顺着 ``$defs`` 解析后才能继续递归。
+    """
+    defs = defs if defs is not None else schema.get("$defs") or {}
+    if "$ref" in schema:
+        name = schema["$ref"].rsplit("/", 1)[-1]
+        resolved = defs.get(name, {})
+        return _example_value(resolved, defs)
+    field_type = schema.get("type")
+    if field_type == "object":
+        props = schema.get("properties") or {}
+        return {key: _example_value(sub, defs) for key, sub in props.items()}
+    if field_type == "array":
+        items = schema.get("items")
+        return [_example_value(items, defs)] if items else []
+    if field_type in ("integer", "number"):
+        return 1
+    if field_type == "boolean":
+        return True
+    enum = schema.get("enum")
+    if enum:
+        return enum[0]
+    return "示例文本"
 
 
 def contract_hint(model: type[_T]) -> str:
-    """把 Pydantic 契约转成给模型的字段说明（不包含任何 Key/敏感信息）。
+    """把 Pydantic 契约转成给模型的字段说明 + 样例 JSON（不含任何 Key/敏感信息）。
 
-    字段列表来自 ``model_json_schema()``，一次生成覆盖全部 Agent。
+    字段列表与样例都来自 ``model_json_schema()``，一次生成覆盖全部 Agent。
+    样例以英文 key 给出，实测（deepseek）对「字段清单」遵从一般，
+    给样例后按样输出成功率高得多。
     文案刻意不用「目标：/主题：/天数：」这类带冒号的标签式短语，
     避免干扰 FakeLLM 的任务分发正则（fake.py 按拼接文本提取参数）。
     """
@@ -52,7 +85,11 @@ def contract_hint(model: type[_T]) -> str:
         req = "必填" if name in required else "可选"
         desc = (info.get("description") or "").strip()
         lines.append(f'- "{name}"（{field_type}，{req}）{desc}'.rstrip())
-    return CONTRACT_HEADING + "\n" + "\n".join(lines)
+    example = json.dumps(_example_value(schema, schema.get("$defs") or {}), ensure_ascii=False, indent=None)
+    return (
+        CONTRACT_HEADING + "\n" + "\n".join(lines)
+        + "\n参考格式（照此结构输出即可）：\n" + example
+    )
 
 
 def parse_struct(text: str, model: type[_T]) -> _T:
