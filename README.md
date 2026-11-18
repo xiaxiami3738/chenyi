@@ -53,13 +53,23 @@ flowchart LR
 
 ## 快速开始（本地 Demo）
 
-```bash
-python -m venv .venv
-. .venv/Scripts/activate        # Linux/macOS: source .venv/bin/activate
-pip install -r requirements.txt -r requirements-dev.txt
+Windows（VS Code 默认终端 PowerShell）：
 
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-dev.txt
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
+
+macOS / Linux（Bash）：
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt -r requirements-dev.txt
 cp .env.example .env            # 默认 APP_MODE=demo，无需任何 Key
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
 打开 http://127.0.0.1:8000 。
