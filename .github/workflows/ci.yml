@@ -1,8 +1,9 @@
 name: CI
 
+# 规范化（2026-11-18）：CI 覆盖所有分支的 push 与全部 PR，
+# dev 等集成分支每次推送都自动跑 lint + 测试 + 镜像构建。
 on:
   push:
-    branches: [main]
   pull_request:
 
 concurrency:
