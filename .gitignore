@@ -29,5 +29,6 @@ deploy/certs/
 deploy/certbot-www/
 deploy/runtime/
 
-# 交接文档含真实凭据，禁止入库
+# 交接文档：本地版含真实凭据禁止入库；分享版脱敏，入库与否由 owner 决定（当前先不入库）
 _交接文档.md
+_交接文档_分享版.md
